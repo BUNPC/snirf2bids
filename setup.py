@@ -10,7 +10,7 @@ import sys
 from shutil import rmtree
 
 from setuptools import find_packages, setup, Command
-from pysnirf2.__version__ import __version__ as VERSION
+from snirf2bids.__version__ import __version__ as VERSION
 
 # Package meta-data.
 NAME = 'snirf2bids'
@@ -109,7 +109,7 @@ setup(
     author_email=EMAIL,
     python_requires=REQUIRES_PYTHON,
     url=URL,
-    packages=find_packages(exclude="tests"),
+    packages=find_packages(exclude={"tests","*.log"}),
     # If your package is a single module, use this instead of 'packages':
     # py_modules=['snirf2bids'],
 
