@@ -9,6 +9,12 @@ import json
 from pysnirf2 import Snirf
 import csv
 
+try:
+    from snirf2bids.__version__ import __version__ as __version__
+except Exception:
+    warn('Failed to load snirf2bids library version')
+    __version__ = '0.0.0'
+
 def _getdefault(fpath, key):
     """Get the fields and values/descriptions for a specific Metadata file from a JSON file.
 

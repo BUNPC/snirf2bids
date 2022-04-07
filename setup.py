@@ -21,6 +21,9 @@ AUTHOR = 'JC'
 REQUIRES_PYTHON = '>=3.6.0'
 # VERSION = '0.1.1'
 
+about = {}
+about['__version__'] = VERSION
+
 # What packages are required for this module to be executed?
 REQUIRED = [
     'numpy',
