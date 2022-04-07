@@ -86,5 +86,16 @@
     "AnatomicalLandmarkCoordinateUnits": "RECOMMENDED",
     "FiducialsCoordinateSystemDescription": "CONDITIONAL",
     "AnatomicalLandmarkCoordinateSystemDescription": "CONDITIONAL",
-    "FiducialsDescription": "OPTIONAL"}
+    "FiducialsDescription": "OPTIONAL"},
+  "participants.tsv":{
+    "participant_id": "REQUIRED",
+    "species": "RECOMMENDED",
+    "age": "RECOMMENDED",
+    "sex": "RECOMMENDED",
+    "handedness": "RECOMMENDED",
+    "strain": "RECOMMENDED",
+    "strain_rrid": "RECOMMENDED"},
+  "scans.tsv": {
+    "filename": "REQUIRED",
+    "acq_time": "OPTIONAL"}
 }

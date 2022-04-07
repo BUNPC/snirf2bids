@@ -1,0 +1,20 @@
+{"dataset_description.json":
+  {"RequirementLevel": "REQUIRED",
+    "Name": "REQUIRED",
+    "BIDSVersion": "REQUIRED",
+    "HEDVersion": "RECOMMENDED",
+    "DatasetType": "RECOMMENDED",
+    "License": "RECOMMENDED",
+    "Authors": "OPTIONAL",
+    "Acknowledgements": "OPTIONAL",
+    "HowToAcknowledge": "OPTIONAL",
+    "Funding": "OPTIONAL",
+    "EthicsApprovals": "OPTIONAL",
+    "ReferencesAndLinks": "OPTIONAL",
+    "DatasetDOI": "OPTIONAL"},
+  "participants.tsv":
+  {"RequirementLevel": "RECOMMENDED"},
+  "README": {"RequirementLevel": "OPTIONAL"},
+  "CHANGES": {"RequirementLevel": "OPTIONAL"},
+  "LICENSE": {"RequirementLevel": "OPTIONAL"}
+}
