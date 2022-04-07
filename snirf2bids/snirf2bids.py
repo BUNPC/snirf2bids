@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ Module for converting snirf file into bids format
 
 Maintained by the Boston University Neurophotonics Center
@@ -7,6 +6,7 @@ Maintained by the Boston University Neurophotonics Center
 import numpy as np
 import json
 from pysnirf2 import Snirf
+from warnings import warn
 import csv
 
 try:
