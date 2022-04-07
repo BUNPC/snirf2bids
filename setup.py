@@ -10,6 +10,7 @@ import sys
 from shutil import rmtree
 
 from setuptools import find_packages, setup, Command
+from snirf2bids import __version__ as __version__
 
 # Package meta-data.
 NAME = 'snirf2bids'
@@ -18,7 +19,7 @@ URL = 'https://github.com/andyzjc/snirf2bids'
 EMAIL = 'andyzjc@bu.edu'
 AUTHOR = 'JC'
 REQUIRES_PYTHON = '>=3.6.0'
-VERSION = '0.1.0'
+VERSION = __version__
 
 # What packages are required for this module to be executed?
 REQUIRED = [
@@ -105,7 +106,7 @@ setup(
     author_email=EMAIL,
     python_requires=REQUIRES_PYTHON,
     url=URL,
-    packages=find_packages(exclude=('tests')),
+    packages=find_packages(exclude="tests"),
     # If your package is a single module, use this instead of 'packages':
     # py_modules=['snirf2bids'],
 
