@@ -1,1 +1,3 @@
 include README.md LICENSE
+recursive-include defaults *
+recursive-include demo *

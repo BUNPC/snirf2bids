@@ -26,6 +26,7 @@ about['__version__'] = VERSION
 
 # What packages are required for this module to be executed?
 REQUIRED = [
+    'importlib_resources',
     'numpy',
     'pysnirf2',
     'setuptools'

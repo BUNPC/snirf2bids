@@ -7,6 +7,7 @@ import numpy as np
 import json
 from pysnirf2 import Snirf
 from warnings import warn
+from importlib_resources import files
 import csv
 
 try:
@@ -34,7 +35,8 @@ def _getdefault(fpath, key):
                  ...
                  'FiducialsDescription': 'OPTIONAL'}
     """
-    file = open('defaults/' + fpath)
+    filepaths = files("defaults")
+    file = open( filepaths / fpath)
     fields = json.load(file)
 
     return fields[key]
@@ -801,12 +803,15 @@ class Channels(TSV):
                         ctype.append("MISC")
                     source_list.append("NaN")
                     detector_list.append("NaN")
+                self._fields['wavelength_nominal'].value = np.append(wavelength_nominal, append_nominal)
+            else:
+                self._fields['wavelength_nominal'].value = wavelength_nominal
 
             self._fields['name'].value = np.array(name)
             self._fields['type'].value = np.array(ctype)
             self._fields['source'].value = np.array(source_list)
             self._fields['detector'].value = np.array(detector_list)
-            self._fields['wavelength_nominal'].value = np.append(wavelength_nominal, append_nominal)
+
 
 
 class Events(TSV):
