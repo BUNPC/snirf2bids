@@ -1121,3 +1121,4 @@ def snirf_to_bids(inputpath: str, outputpath: str, participants: dict = None):
         writer = csv.DictWriter(f, fieldnames=list(subj.scans.keys()), delimiter="\t", quotechar='"')
         writer.writeheader()
         writer.writerow({'filename':  subj.scans['filename'], 'acq_time': subj.scans['acq_time']})
+
