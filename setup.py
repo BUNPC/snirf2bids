@@ -19,7 +19,6 @@ URL = 'https://github.com/andyzjc/snirf2bids'
 EMAIL = 'andyzjc@bu.edu'
 AUTHOR = 'JC'
 REQUIRES_PYTHON = '>=3.6.0'
-# VERSION = '0.1.1'
 
 about = {}
 about['__version__'] = VERSION
