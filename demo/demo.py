@@ -13,7 +13,7 @@ def convert():
 
     # a SNIRF file (input) path
     cwd = os.getcwd()
-    snirf_file_path = cwd + 'sub-02_task-test_nirs.snirf'
+    snirf_file_path = cwd + '\sub-02_task-test_nirs.snirf'
 
     # a BIDS (output) destination directory
     bids_path = cwd
@@ -30,8 +30,8 @@ def convert():
     # The participant information is optional, and the default is None.
     # When the participant information is present, the function will also create a participant.tsv file
 
-    snirf2bids.snirf_to_bids(snirf=snirf_file_path,
-                             output=bids_path,
+    snirf2bids.snirf_to_bids(inputpath=snirf_file_path,
+                             outputpath=bids_path,
                              participants=subj1)
 
     #####################
