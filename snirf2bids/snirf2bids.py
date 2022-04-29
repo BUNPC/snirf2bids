@@ -16,6 +16,7 @@ except Exception:
     warn('Failed to load snirf2bids library version')
     __version__ = '0.0.0'
 
+
 def _getdefault(fpath, key):
     """Get the fields/keys and corresponding values/descriptions from a JSON file.
 
@@ -36,7 +37,7 @@ def _getdefault(fpath, key):
                  'FiducialsDescription': 'OPTIONAL'}
     """
     filepaths = files("defaults")
-    file = open( filepaths / fpath)
+    file = open(filepaths / fpath)
     fields = json.load(file)
     file.close()
 
@@ -236,7 +237,7 @@ def _compliancy_check(bids):
         elif x in ['subinfo']:
             pass
         elif x in ['participants', 'scans']:
-            class_spec = _getdefault('BIDS_fNIRS_subject_folder.json',x+'.tsv')
+            class_spec = _getdefault('BIDS_fNIRS_subject_folder.json', x + '.tsv')
             for field in class_spec.keys():
                 if class_spec[field] == 'REQUIRED' and field not in bids.__dict__[x]:
                     message = 'FATAL: The field ' + field + 'is REQUIRED in ' + x.capitalize()
@@ -605,7 +606,7 @@ class TSV(Metadata):
         classname = self.get_class_name().lower()
         filedir = _makefiledir(info, classname, fpath)
 
-        fieldnames, valfiltered,jsontext = self.get_all_fields()
+        fieldnames, valfiltered, jsontext = self.get_all_fields()
 
         # TSV FILE WRITING
         with open(filedir, 'w', newline='') as tsvfile:
@@ -672,23 +673,22 @@ class TSV(Metadata):
 
         # VARIABLE ORGANIZATION
         fieldnames = []  # filter out the fieldnames with empty fields, and organize into row structure
-        for i in range(len(fields)-1):
+        for i in range(len(fields) - 1):
             if values[i] is not None:
                 fieldnames = np.append(fieldnames, fields[i])
                 name = fields[i] + '\t'
                 temp = temp + name
-        name = fields[len(fields)-1] = '\n'
+        name = fields[len(fields) - 1] = '\n'
         temp = temp + name
         valfiltered = list(filter(None.__ne__, values))  # remove all None fields
         valfiltered = np.transpose(valfiltered)  # transpose into correct row structure
 
-
         for one in valfiltered:
             looptemp = ''
-            for j in range(len(one)-1):
+            for j in range(len(one) - 1):
                 looptemp = one[j] + '\t'
                 temp = temp + looptemp
-            looptemp = one[len(one)-1] + '\n'
+            looptemp = one[len(one) - 1] + '\n'
             temp = temp + looptemp
 
         return fieldnames, valfiltered, temp
@@ -1096,7 +1096,7 @@ class Subject(object):
             # Pull out the sessions here with a function
             return self.subinfo['ses-']
 
-    def directory_export(self, fpath:str):
+    def directory_export(self, fpath: str):
         """Exports/creates the BIDS-compliant metadata files based on information stored in the 'subject' class object
 
             Args:
@@ -1128,11 +1128,11 @@ class Subject(object):
         subj['coordsystem'] = temp
 
         # optodes.tsv
-        fieldnames, valfiltered,jsontext = self.optodes.get_all_fields()
+        fieldnames, valfiltered, jsontext = self.optodes.get_all_fields()
         subj['optodes'] = jsontext
 
         # channels.tsv
-        fieldnames, valfiltered,jsontext = self.channel.get_all_fields()
+        fieldnames, valfiltered, jsontext = self.channel.get_all_fields()
         subj['channels'] = jsontext
 
         # sidecar
@@ -1140,7 +1140,7 @@ class Subject(object):
         subj['sidecar'] = temp
 
         # event.tsv
-        fieldnames, valfiltered,jsontext = self.events.get_all_fields()
+        fieldnames, valfiltered, jsontext = self.events.get_all_fields()
         subj['events'] = jsontext
 
         text = json.dumps(subj)
@@ -1182,5 +1182,5 @@ def snirf_to_bids(inputpath: str, outputpath: str, participants: dict = None):
     with open(fname, 'w', newline='') as f:
         writer = csv.DictWriter(f, fieldnames=list(subj.scans.keys()), delimiter="\t", quotechar='"')
         writer.writeheader()
-        writer.writerow({'filename':  subj.scans['filename'], 'acq_time': subj.scans['acq_time']})
+        writer.writerow({'filename': subj.scans['filename'], 'acq_time': subj.scans['acq_time']})
     f.close()
