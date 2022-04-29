@@ -21,12 +21,12 @@ class FakeTest(unittest.TestCase):
 
     def test_json_output(self):
         # create subject
-        subj1 = s2b.Subject(fpath=self._test_files[2])
+        subj1 = s2b.Subject(fpath=self._test_files[1])
         jsontext = subj1.json_export()
         temp = json.load(jsontext)
 
         # load standard data
-        reference = json.load(self._test_files[2])
+        reference = json.load(self._test_files[0])
 
         self.assert_(sorted(temp.items()) == sorted(reference.items()))
 
