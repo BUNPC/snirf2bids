@@ -4,7 +4,10 @@ on:
   pull_request:
   push:
     branches:
-      - main
+      - development
+      
+permissions:
+  contents: read
 
 jobs:
   deploy:
@@ -15,7 +18,7 @@ jobs:
       - name: Install Python 3
         uses: actions/setup-python@v1
         with:
-          python-version: 3.6
+          python-version: '3.x'
           
       - name: Install dependencies
         run: |
