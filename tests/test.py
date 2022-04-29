@@ -21,12 +21,12 @@ class FakeTest(unittest.TestCase):
 
     def test_json_output(self):
         # create subject
-        subj1 = s2b.Subject(fpath=self._test_files[1])
+        subj1 = s2b.Subject(fpath=self._test_files[0])
         jsontext = subj1.json_export()
         temp = json.loads(jsontext)
 
         # load standard data
-        with open(self._test_files[2], 'r') as f:
+        with open(self._test_files[1], 'r') as f:
             reference = json.loads(f.read())
         f.close()
 
