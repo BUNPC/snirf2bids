@@ -271,22 +271,6 @@ def _tsv_to_json(tsv_dict):
     return field_temp + value_temp
 
 
-
-# class NumpyEncoder(json.JSONEncoder):
-#     """ Special json encoder for numpy types """
-#     def default(self, obj):
-#         if isinstance(obj, (np.int_, np.intc, np.intp, np.int8,
-#                             np.int16, np.int32, np.int64, np.uint8,
-#                             np.uint16, np.uint32, np.uint64)):
-#             return int(obj)
-#         elif isinstance(obj, (np.float_, np.float16, np.float32,
-#                               np.float64)):
-#             return float(obj)
-#         elif isinstance(obj, (np.ndarray,)):
-#             return obj.tolist()
-#         return json.JSONEncoder.default(self, obj)
-
-
 class Field:
     """Class which encapsulates fields inside a Metadata class
 
@@ -970,7 +954,7 @@ class Sidecar(JSON):
 
         with Snirf(fpath) as s:
             self._fields['SamplingFrequency'].value = np.mean(np.diff(np.array(s.nirs[0].data[0].time)))
-            self._fields['NIRSchannelsCount'].value = len(s.nirs[0].data[0].measurementList)
+            self._fields['NIRSChannelCount'].value = len(s.nirs[0].data[0].measurementList)
 
             if s.nirs[0].probe.detectorPos2D is None \
                     and s.nirs[0].probe.sourcePos2D is None:
