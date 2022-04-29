@@ -16,6 +16,7 @@ except Exception:
     warn('Failed to load snirf2bids library version')
     __version__ = '0.0.0'
 
+
 def _getdefault(fpath, key):
     """Get the fields/keys and corresponding values/descriptions from a JSON file.
 
@@ -36,8 +37,9 @@ def _getdefault(fpath, key):
                  'FiducialsDescription': 'OPTIONAL'}
     """
     filepaths = files("defaults")
-    file = open( filepaths / fpath)
+    file = open(filepaths / fpath)
     fields = json.load(file)
+    file.close()
 
     return fields[key]
 
@@ -235,7 +237,7 @@ def _compliancy_check(bids):
         elif x in ['subinfo']:
             pass
         elif x in ['participants', 'scans']:
-            class_spec = _getdefault('BIDS_fNIRS_subject_folder.json',x+'.tsv')
+            class_spec = _getdefault('BIDS_fNIRS_subject_folder.json', x + '.tsv')
             for field in class_spec.keys():
                 if class_spec[field] == 'REQUIRED' and field not in bids.__dict__[x]:
                     message = 'FATAL: The field ' + field + 'is REQUIRED in ' + x.capitalize()
@@ -244,19 +246,19 @@ def _compliancy_check(bids):
             raise ValueError('There is an invalid field ' + x + ' within your BIDS object')
 
 
-class NumpyEncoder(json.JSONEncoder):
-    """ Special json encoder for numpy types """
-    def default(self, obj):
-        if isinstance(obj, (np.int_, np.intc, np.intp, np.int8,
-                            np.int16, np.int32, np.int64, np.uint8,
-                            np.uint16, np.uint32, np.uint64)):
-            return int(obj)
-        elif isinstance(obj, (np.float_, np.float16, np.float32,
-                              np.float64)):
-            return float(obj)
-        elif isinstance(obj, (np.ndarray,)):
-            return obj.tolist()
-        return json.JSONEncoder.default(self, obj)
+# class NumpyEncoder(json.JSONEncoder):
+#     """ Special json encoder for numpy types """
+#     def default(self, obj):
+#         if isinstance(obj, (np.int_, np.intc, np.intp, np.int8,
+#                             np.int16, np.int32, np.int64, np.uint8,
+#                             np.uint16, np.uint32, np.uint64)):
+#             return int(obj)
+#         elif isinstance(obj, (np.float_, np.float16, np.float32,
+#                               np.float64)):
+#             return float(obj)
+#         elif isinstance(obj, (np.ndarray,)):
+#             return obj.tolist()
+#         return json.JSONEncoder.default(self, obj)
 
 
 class Field:
@@ -524,6 +526,7 @@ class JSON(Metadata):
         """
         with open(fpath) as file:
             fields = json.load(file)
+        file.close()
         new = {}
         for name in fields:
             # assume they are all string now
@@ -557,6 +560,7 @@ class JSON(Metadata):
                 fields[name] = self._fields[name].value
         with open(filedir, 'w') as file:
             json.dump(fields, file, indent=4)
+        file.close()
         self._fields['path2origin'].value = filedir
 
     def get_all_fields(self):
@@ -602,13 +606,14 @@ class TSV(Metadata):
         classname = self.get_class_name().lower()
         filedir = _makefiledir(info, classname, fpath)
 
-        fieldnames, valfiltered,jsontext = self.get_all_fields()
+        fieldnames, valfiltered, jsontext = self.get_all_fields()
 
         # TSV FILE WRITING
         with open(filedir, 'w', newline='') as tsvfile:
             writer = csv.writer(tsvfile, dialect='excel-tab')  # writer setup in tsv format
             writer.writerow(fieldnames)  # write fieldnames
             writer.writerows(valfiltered)  # write rows
+        tsvfile.close()
 
     def load_from_tsv(self, fpath):
         """Create the TSV metadata class from a TSV file
@@ -630,6 +635,7 @@ class TSV(Metadata):
                 row = ''.join(row for row in onerow)
                 row = row.split('\t')
                 rows = np.vstack((rows, row))
+        file.close()
 
         for i in range(len(rows[0])):
             onename = rows[0][i]
@@ -656,6 +662,7 @@ class TSV(Metadata):
         filedir = _makefiledir(info, classname, fpath, sidecar)
         with open(filedir, 'w') as file:
             json.dump(self._sidecar, file, indent=4)
+        file.close()
 
     def get_all_fields(self):
         # VARIABLE DECLARATION
@@ -666,23 +673,22 @@ class TSV(Metadata):
 
         # VARIABLE ORGANIZATION
         fieldnames = []  # filter out the fieldnames with empty fields, and organize into row structure
-        for i in range(len(fields)-1):
+        for i in range(len(fields) - 1):
             if values[i] is not None:
                 fieldnames = np.append(fieldnames, fields[i])
                 name = fields[i] + '\t'
                 temp = temp + name
-        name = fields[len(fields)-1] = '\n'
+        name = fields[len(fields) - 1] = '\n'
         temp = temp + name
         valfiltered = list(filter(None.__ne__, values))  # remove all None fields
         valfiltered = np.transpose(valfiltered)  # transpose into correct row structure
 
-
         for one in valfiltered:
             looptemp = ''
-            for j in range(len(one)-1):
+            for j in range(len(one) - 1):
                 looptemp = one[j] + '\t'
                 temp = temp + looptemp
-            looptemp = one[len(one)-1] + '\n'
+            looptemp = one[len(one) - 1] + '\n'
             temp = temp + looptemp
 
         return fieldnames, valfiltered, temp
@@ -1090,7 +1096,7 @@ class Subject(object):
             # Pull out the sessions here with a function
             return self.subinfo['ses-']
 
-    def directory_export(self, fpath:str):
+    def directory_export(self, fpath: str):
         """Exports/creates the BIDS-compliant metadata files based on information stored in the 'subject' class object
 
             Args:
@@ -1122,11 +1128,11 @@ class Subject(object):
         subj['coordsystem'] = temp
 
         # optodes.tsv
-        fieldnames, valfiltered,jsontext = self.optodes.get_all_fields()
+        fieldnames, valfiltered, jsontext = self.optodes.get_all_fields()
         subj['optodes'] = jsontext
 
         # channels.tsv
-        fieldnames, valfiltered,jsontext = self.channel.get_all_fields()
+        fieldnames, valfiltered, jsontext = self.channel.get_all_fields()
         subj['channels'] = jsontext
 
         # sidecar
@@ -1134,10 +1140,10 @@ class Subject(object):
         subj['sidecar'] = temp
 
         # event.tsv
-        fieldnames, valfiltered,jsontext = self.events.get_all_fields()
+        fieldnames, valfiltered, jsontext = self.events.get_all_fields()
         subj['events'] = jsontext
 
-        text = json.dumps(subj, cls=NumpyEncoder)
+        text = json.dumps(subj)
         return text
 
 
@@ -1169,12 +1175,12 @@ def snirf_to_bids(inputpath: str, outputpath: str, participants: dict = None):
             writer = csv.DictWriter(f, fieldnames=list(participants.keys()), delimiter="\t", quotechar='"')
             writer.writeheader()
             writer.writerow(participants)
-
+    f.close()
     # scans.tsv output
     # same thing as participants for scans
     fname = outputpath + '/scans.tsv'
     with open(fname, 'w', newline='') as f:
         writer = csv.DictWriter(f, fieldnames=list(subj.scans.keys()), delimiter="\t", quotechar='"')
         writer.writeheader()
-        writer.writerow({'filename':  subj.scans['filename'], 'acq_time': subj.scans['acq_time']})
-
+        writer.writerow({'filename': subj.scans['filename'], 'acq_time': subj.scans['acq_time']})
+    f.close()
