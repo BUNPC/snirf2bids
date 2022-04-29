@@ -10,7 +10,7 @@
 
 - [`snirf2bids.Channels`](./snirf2bids.md#class-channels): Channels Metadata Class
 - [`snirf2bids.Coordsystem`](./snirf2bids.md#class-coordsystem): Coordinate System Metadata Class
-- [`snirf2bids.Events`](./snirf2bids.md#class-events): Channels Metadata Class
+- [`snirf2bids.Events`](./snirf2bids.md#class-events): Events Metadata Class
 - [`snirf2bids.Field`](./snirf2bids.md#class-field): Class which encapsulates fields inside a Metadata class
 - [`snirf2bids.JSON`](./snirf2bids.md#class-json): JSON Class
 - [`snirf2bids.Metadata`](./snirf2bids.md#class-metadata): Metadata File Class
