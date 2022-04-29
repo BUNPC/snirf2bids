@@ -1125,23 +1125,28 @@ class Subject(object):
 
         # coordsystem
         temp = self.coordsystem.get_all_fields()
-        subj['coordsystem'] = temp
+        name = _make_filename(self.coordsystem.get_class_name().lower(), self.subinfo)
+        subj[name] = temp
 
         # optodes.tsv
         fieldnames, valfiltered, jsontext = self.optodes.get_all_fields()
-        subj['optodes'] = jsontext
+        name = _make_filename(self.optodes.get_class_name().lower(), self.subinfo)
+        subj[name] = jsontext
 
         # channels.tsv
         fieldnames, valfiltered, jsontext = self.channel.get_all_fields()
-        subj['channels'] = jsontext
+        name = _make_filename(self.channel.get_class_name().lower(), self.subinfo)
+        subj[name] = jsontext
 
         # sidecar
         temp = self.sidecar.get_all_fields()
-        subj['sidecar'] = temp
+        name = _make_filename(self.sidecar.get_class_name().lower(), self.subinfo)
+        subj[name] = temp
 
         # event.tsv
         fieldnames, valfiltered, jsontext = self.events.get_all_fields()
-        subj['events'] = jsontext
+        name = _make_filename(self.events.get_class_name().lower(), self.subinfo)
+        subj[name] = jsontext
 
         text = json.dumps(subj)
         return text
