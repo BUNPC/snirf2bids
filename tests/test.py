@@ -23,12 +23,14 @@ class FakeTest(unittest.TestCase):
         # create subject
         subj1 = s2b.Subject(fpath=self._test_files[1])
         jsontext = subj1.json_export()
-        temp = json.load(jsontext)
+        temp = json.loads(jsontext)
 
         # load standard data
-        reference = json.load(self._test_files[0])
+        with open(self._test_files[0], 'r') as f:
+            reference = json.loads(f.read())
+        f.close()
 
-        self.assert_(sorted(temp.items()) == sorted(reference.items()))
+        self.assertTrue(sorted(temp.items()) == sorted(reference.items()))
 
     def setUp(self):
         print('Copying all test files to', working_directory)

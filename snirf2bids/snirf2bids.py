@@ -38,6 +38,7 @@ def _getdefault(fpath, key):
     filepaths = files("defaults")
     file = open( filepaths / fpath)
     fields = json.load(file)
+    file.close()
 
     return fields[key]
 
@@ -244,19 +245,19 @@ def _compliancy_check(bids):
             raise ValueError('There is an invalid field ' + x + ' within your BIDS object')
 
 
-class NumpyEncoder(json.JSONEncoder):
-    """ Special json encoder for numpy types """
-    def default(self, obj):
-        if isinstance(obj, (np.int_, np.intc, np.intp, np.int8,
-                            np.int16, np.int32, np.int64, np.uint8,
-                            np.uint16, np.uint32, np.uint64)):
-            return int(obj)
-        elif isinstance(obj, (np.float_, np.float16, np.float32,
-                              np.float64)):
-            return float(obj)
-        elif isinstance(obj, (np.ndarray,)):
-            return obj.tolist()
-        return json.JSONEncoder.default(self, obj)
+# class NumpyEncoder(json.JSONEncoder):
+#     """ Special json encoder for numpy types """
+#     def default(self, obj):
+#         if isinstance(obj, (np.int_, np.intc, np.intp, np.int8,
+#                             np.int16, np.int32, np.int64, np.uint8,
+#                             np.uint16, np.uint32, np.uint64)):
+#             return int(obj)
+#         elif isinstance(obj, (np.float_, np.float16, np.float32,
+#                               np.float64)):
+#             return float(obj)
+#         elif isinstance(obj, (np.ndarray,)):
+#             return obj.tolist()
+#         return json.JSONEncoder.default(self, obj)
 
 
 class Field:
@@ -524,6 +525,7 @@ class JSON(Metadata):
         """
         with open(fpath) as file:
             fields = json.load(file)
+        file.close()
         new = {}
         for name in fields:
             # assume they are all string now
@@ -557,6 +559,7 @@ class JSON(Metadata):
                 fields[name] = self._fields[name].value
         with open(filedir, 'w') as file:
             json.dump(fields, file, indent=4)
+        file.close()
         self._fields['path2origin'].value = filedir
 
     def get_all_fields(self):
@@ -609,6 +612,7 @@ class TSV(Metadata):
             writer = csv.writer(tsvfile, dialect='excel-tab')  # writer setup in tsv format
             writer.writerow(fieldnames)  # write fieldnames
             writer.writerows(valfiltered)  # write rows
+        tsvfile.close()
 
     def load_from_tsv(self, fpath):
         """Create the TSV metadata class from a TSV file
@@ -630,6 +634,7 @@ class TSV(Metadata):
                 row = ''.join(row for row in onerow)
                 row = row.split('\t')
                 rows = np.vstack((rows, row))
+        file.close()
 
         for i in range(len(rows[0])):
             onename = rows[0][i]
@@ -656,6 +661,7 @@ class TSV(Metadata):
         filedir = _makefiledir(info, classname, fpath, sidecar)
         with open(filedir, 'w') as file:
             json.dump(self._sidecar, file, indent=4)
+        file.close()
 
     def get_all_fields(self):
         # VARIABLE DECLARATION
@@ -1137,7 +1143,7 @@ class Subject(object):
         fieldnames, valfiltered,jsontext = self.events.get_all_fields()
         subj['events'] = jsontext
 
-        text = json.dumps(subj, cls=NumpyEncoder)
+        text = json.dumps(subj)
         return text
 
 
@@ -1169,7 +1175,7 @@ def snirf_to_bids(inputpath: str, outputpath: str, participants: dict = None):
             writer = csv.DictWriter(f, fieldnames=list(participants.keys()), delimiter="\t", quotechar='"')
             writer.writeheader()
             writer.writerow(participants)
-
+    f.close()
     # scans.tsv output
     # same thing as participants for scans
     fname = outputpath + '/scans.tsv'
@@ -1177,4 +1183,4 @@ def snirf_to_bids(inputpath: str, outputpath: str, participants: dict = None):
         writer = csv.DictWriter(f, fieldnames=list(subj.scans.keys()), delimiter="\t", quotechar='"')
         writer.writeheader()
         writer.writerow({'filename':  subj.scans['filename'], 'acq_time': subj.scans['acq_time']})
-
+    f.close()
