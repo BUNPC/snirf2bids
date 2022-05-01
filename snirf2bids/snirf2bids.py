@@ -8,6 +8,7 @@ import json
 from pysnirf2 import Snirf
 from warnings import warn
 from importlib_resources import files
+import os
 import csv
 
 try:
@@ -228,7 +229,7 @@ def _compliancy_check(bids):
     """
     subj_object = bids.__dict__.keys()
     for x in subj_object:
-        if x in ['channel', 'coordsystem', 'events', 'optodes', 'sidecar']:
+        if x in ['channels', 'coordsystem', 'events', 'optodes', 'sidecar']:
             class_spec = bids.__dict__[x].default_fields()[0]
             for field in class_spec.keys():
                 if class_spec[field] == 'REQUIRED' and bids.__dict__[x]._fields[field].value is None:
@@ -246,19 +247,29 @@ def _compliancy_check(bids):
             raise ValueError('There is an invalid field ' + x + ' within your BIDS object')
 
 
-# class NumpyEncoder(json.JSONEncoder):
-#     """ Special json encoder for numpy types """
-#     def default(self, obj):
-#         if isinstance(obj, (np.int_, np.intc, np.intp, np.int8,
-#                             np.int16, np.int32, np.int64, np.uint8,
-#                             np.uint16, np.uint32, np.uint64)):
-#             return int(obj)
-#         elif isinstance(obj, (np.float_, np.float16, np.float32,
-#                               np.float64)):
-#             return float(obj)
-#         elif isinstance(obj, (np.ndarray,)):
-#             return obj.tolist()
-#         return json.JSONEncoder.default(self, obj)
+def _tsv_to_json(tsv_dict):
+
+    fields = list(tsv_dict.keys())
+    values = list(tsv_dict.values())
+    field_temp = ''
+    value_temp = ''
+
+    for i in range(len(fields) - 1):
+        field_name = fields[i] + '\t'
+        if values[i] is None:
+            value_name = '\t'
+        else:
+            value_name = values[i] + '\t'
+        field_temp = field_temp + field_name
+        value_temp = value_temp + value_name
+
+    field_temp = field_temp + fields[len(fields) - 1] + '\n'
+    if values[len(values) - 1] is None:
+        value_temp = value_temp + '\n'
+    else:
+        value_temp = value_temp + values[len(values) - 1] + '\n'
+
+    return field_temp + value_temp
 
 
 class Field:
@@ -356,7 +367,8 @@ class Metadata:
         Most importantly, it constructs the default fields with empty values within _fields in a dictionary format
         """
         default_list, default_type = self.default_fields()
-        default = {'path2origin': String(None)}
+        # default = {'path2origin': String(None)}
+        default = {}
         for name in default_list:
             # assume they are all string now
             if default_type[name] == 'String':
@@ -561,15 +573,18 @@ class JSON(Metadata):
         with open(filedir, 'w') as file:
             json.dump(fields, file, indent=4)
         file.close()
-        self._fields['path2origin'].value = filedir
+        # self._fields['path2origin'].value = filedir
 
     def get_all_fields(self):
         temp = {}
-        fields = self.default_fields()
-        for one in fields[0]:
+        fields = self._fields
+        defaults = self.default_fields()[0]
+        for one in fields:
             value = getattr(self, one)
             if value is not None:
                 temp[one] = value
+            elif value is None and defaults[one] == 'REQUIRED':  # this will include all empty required fields
+                temp[one] = ''
 
         return temp
 
@@ -678,7 +693,7 @@ class TSV(Metadata):
                 fieldnames = np.append(fieldnames, fields[i])
                 name = fields[i] + '\t'
                 temp = temp + name
-        name = fields[len(fields) - 1] = '\n'
+        name = fields[len(fields) - 1] + '\n'
         temp = temp + name
         valfiltered = list(filter(None.__ne__, values))  # remove all None fields
         valfiltered = np.transpose(valfiltered)  # transpose into correct row structure
@@ -781,7 +796,7 @@ class Channels(TSV):
     """
 
     def __init__(self, fpath=None):
-        """Inherited constructor for the Channels class
+        """Inherited constructor for the channels class
 
             Args:
                 fpath: The file path to a reference SNIRF file
@@ -794,7 +809,7 @@ class Channels(TSV):
             super().__init__()
 
     def load_from_SNIRF(self, fpath):
-        """Creates the Channels class based on information from a reference SNIRF file
+        """Creates the channels class based on information from a reference SNIRF file
 
             Args:
                 fpath: The file path to the reference SNIRF file
@@ -864,7 +879,7 @@ class Channels(TSV):
 
 
 class Events(TSV):
-    """Channels Metadata Class
+    """Events Metadata Class
 
     Class object that mimics and contains the data for the events.tsv metadata file
     """
@@ -961,7 +976,7 @@ class Subject(object):
     Attributes:
         coordsystem: Contains a Coordsystem class object for a specific 'subject'/run
         optodes: Contains an Optodes class object for a specific 'subject'/run
-        channel: Contains a Channels class object for a specific 'subject'/run
+        channels: Contains a channels class object for a specific 'subject'/run
         sidecar: Contains a Sidecar (_nirs.JSON) class object for a specific 'subject'/run
         events: Contains an Events class object for a specific 'subject'/run
         subinfo: Contains the 'subject'/run information related to the data stored in a 'Subject' object
@@ -971,10 +986,11 @@ class Subject(object):
 
     def __init__(self, fpath=None):
         """Constructor for the 'Subject' class"""
+        self.SNIRF = Snirf(fpath)
 
         self.coordsystem = Coordsystem(fpath=fpath)
         self.optodes = Optodes(fpath=fpath)
-        self.channel = Channels(fpath=fpath)
+        self.channels = Channels(fpath=fpath)
         self.sidecar = Sidecar(fpath=fpath)
         self.events = Events(fpath=fpath)
         self.subinfo = {
@@ -1035,7 +1051,7 @@ class Subject(object):
         ses_fnames = None
         # Case of No SESSION OR RUN NUMBER
         if self.subinfo['ses-'] is None and self.subinfo['run-'] is None:
-            fields = ['optodes', 'coordsystem', 'sidecar', 'events', 'channel']
+            fields = ['optodes', 'coordsystem', 'sidecar', 'events', 'channels']
             subj_fnames = {field: None for field in fields}
             keylist = list(subj_fnames.keys())
             for key in keylist:
@@ -1046,7 +1062,7 @@ class Subject(object):
         # CASE OF SESSION EXISTING
         if self.subinfo['ses-'] is not None and self.subinfo['run-'] is None:
             subj_fields = ['optodes', 'coordsystem']
-            ses_fields = ['sidecar', 'events', 'channel']
+            ses_fields = ['sidecar', 'events', 'channels']
 
             subj_fnames = {field: None for field in subj_fields}
             keylist = list(subj_fnames.keys())
@@ -1058,7 +1074,10 @@ class Subject(object):
             for key in keylist:
                 ses_fnames[key] = _make_filename(key, self.subinfo)
 
-        return subj_fnames, ses_fnames
+        if ses_fnames is None:
+            return subj_fnames
+        else:
+            return subj_fnames | ses_fnames
 
     def load_from_snirf(self, fpath):
         """Loads the metadata from a reference SNIRF file
@@ -1069,7 +1088,7 @@ class Subject(object):
 
         self.coordsystem.load_from_SNIRF(fpath)
         self.optodes.load_from_SNIRF(fpath)
-        self.channel.load_from_SNIRF(fpath)
+        self.channels.load_from_SNIRF(fpath)
         self.sidecar.load_from_SNIRF(fpath)
 
     def get_subj(self):
@@ -1114,73 +1133,125 @@ class Subject(object):
         self.coordsystem.save_to_json(self.subinfo, fpath)
         self.optodes.save_to_tsv(self.subinfo, fpath)
         self.optodes.export_sidecar(self.subinfo, fpath)
-        self.channel.save_to_tsv(self.subinfo, fpath)
-        self.channel.export_sidecar(self.subinfo, fpath)
+        self.channels.save_to_tsv(self.subinfo, fpath)
+        self.channels.export_sidecar(self.subinfo, fpath)
         self.sidecar.save_to_json(self.subinfo, fpath)
         self.events.save_to_tsv(self.subinfo, fpath)
         self.events.export_sidecar(self.subinfo, fpath)
 
     def json_export(self):
-        subj = {}
+        subj = self.subinfo
+        subjnames= self.pull_fnames()
 
-        # coordsystem
+        # coordsystem.json
+        name = 'coordsystem'
         temp = self.coordsystem.get_all_fields()
-        subj['coordsystem'] = temp
+        subj[subjnames[name]] = temp
 
-        # optodes.tsv
-        fieldnames, valfiltered, jsontext = self.optodes.get_all_fields()
-        subj['optodes'] = jsontext
+        # optodes.tsv + json sidecar
+        name = 'optodes'
+        fieldnames, valfiltered, temp = self.optodes.get_all_fields()
+        subj[subjnames[name]] = temp
 
-        # channels.tsv
-        fieldnames, valfiltered, jsontext = self.channel.get_all_fields()
-        subj['channels'] = jsontext
+        sidecarname = _make_filename(name, subj, 'sidecar')
+        subj[sidecarname] = self.optodes._sidecar
 
-        # sidecar
+        # channels.tsv + json sidecar
+        name = 'channels'
+        fieldnames, valfiltered, temp = self.channels.get_all_fields()
+        subj[subjnames[name]] = temp
+
+        sidecarname = _make_filename(name, subj, 'sidecar')
+        subj[sidecarname] = self.channels._sidecar
+
+        # nirs sidecar
+        name = 'sidecar'
         temp = self.sidecar.get_all_fields()
-        subj['sidecar'] = temp
+        subj[subjnames[name]] = temp
 
-        # event.tsv
-        fieldnames, valfiltered, jsontext = self.events.get_all_fields()
-        subj['events'] = jsontext
+        # event.tsv + json sidecar
+        name = 'events'
+        fieldnames, valfiltered, temp = self.events.get_all_fields()
+        subj[subjnames[name]] = temp
+
+        sidecarname = _make_filename(name, subj, 'sidecar')
+        subj[sidecarname] = self.events._sidecar
+
+        # participant.tsv
+        fields = self.participants
+        text = _tsv_to_json(fields)
+        subj['participants.tsv'] = text
+
+        # scans.tsv
+        fields = self.scans
+        text = _tsv_to_json(fields)
+        subj['scans.tsv'] = text
 
         text = json.dumps(subj)
         return text
 
 
-def snirf_to_bids(inputpath: str, outputpath: str, participants: dict = None):
+def snirf2bids(inputpath: str, outputpath: str = None):
     """Creates a BIDS-compliant folder structure (right now, just the metadata files) from a SNIRF file
 
         Args:
             inputpath: The file path to the reference SNIRF file
             outputpath: The file path/directory for the created BIDS metadata files
-            participants: A dictionary with participant information
+            participant: A dictionary with participant information
                 Example =
                     {participant_id: 'sub-01',
                      age: 34,
                      sex: 'M'}
             scans: A dictionary with SNIRF/run information and its acquisition time
     """
+    # checking directory
+    if os.path.isfile(inputpath):
+        subj = Subject(inputpath)
+    else:
+        return ValueError('Invalid directory to SNIRF file.')
 
-    subj = Subject(inputpath)
+    if outputpath is None:  # if output directory is not specified, it will be same as input
+        outputpath = os.path.dirname(inputpath)
+
+    if os.path.isdir(outputpath):
+        subjpath = 'sub' + str(subj.subinfo['sub-'])
+        outputpath = os.path.join(outputpath, subjpath)
+        if not os.path.exists(outputpath):
+            os.mkdir(outputpath)
+
+        if subj.subinfo['ses-'] is not None:
+            sespath = 'ses' + str(subj.subinfo['ses-'])
+            outputpath = os.path.join(outputpath, sespath)
+            if not os.path.exists(outputpath):
+                os.mkdir(outputpath)
+
+        outputpath = os.path.join(outputpath, 'nirs')
+        if not os.path.exists(outputpath):
+            os.mkdir(outputpath)
+    else:
+        return ValueError('Invalid directory to build BIDS folder.')
+
     subj.directory_export(outputpath)
-    fname = outputpath + '/participants.tsv'
+
+    # re-create source snirf file
+    snirfoutput = os.path.join(outputpath,os.path.basename(inputpath))
+    if not os.path.isfile(snirfoutput):
+        subj.SNIRF.save(snirfoutput)
 
     # This will probably work only with a single SNIRF file for now
+    fname = outputpath + '/participants.tsv'
     with open(fname, 'w', newline='') as f:
-        if participants is None:
-            writer = csv.DictWriter(f, fieldnames=list(subj.participants.keys()), delimiter="\t", quotechar='"')
-            writer.writeheader()
-            writer.writerow({'participant_id': 'sub-' + subj.get_subj()})
-        else:
-            writer = csv.DictWriter(f, fieldnames=list(participants.keys()), delimiter="\t", quotechar='"')
-            writer.writeheader()
-            writer.writerow(participants)
+        writer = csv.DictWriter(f, fieldnames=list(subj.participants.keys()), delimiter="\t", quotechar='"')
+        writer.writeheader()
+        writer.writerow(subj.participants)
     f.close()
-    # scans.tsv output
-    # same thing as participants for scans
+
+    # scans.tsv output, same thing as participants for scans
     fname = outputpath + '/scans.tsv'
     with open(fname, 'w', newline='') as f:
         writer = csv.DictWriter(f, fieldnames=list(subj.scans.keys()), delimiter="\t", quotechar='"')
         writer.writeheader()
-        writer.writerow({'filename': subj.scans['filename'], 'acq_time': subj.scans['acq_time']})
+        writer.writerow(subj.scans)
     f.close()
+
+    return subj.json_export()
