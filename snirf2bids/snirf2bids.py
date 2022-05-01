@@ -8,6 +8,7 @@ import json
 from pysnirf2 import Snirf
 from warnings import warn
 from importlib_resources import files
+import os
 import csv
 
 try:
@@ -985,6 +986,7 @@ class Subject(object):
 
     def __init__(self, fpath=None):
         """Constructor for the 'Subject' class"""
+        self.SNIRF = Snirf(fpath)
 
         self.coordsystem = Coordsystem(fpath=fpath)
         self.optodes = Optodes(fpath=fpath)
@@ -1072,7 +1074,10 @@ class Subject(object):
             for key in keylist:
                 ses_fnames[key] = _make_filename(key, self.subinfo)
 
-        return subj_fnames, ses_fnames
+        if ses_fnames is None:
+            return subj_fnames
+        else:
+            return subj_fnames | ses_fnames
 
     def load_from_snirf(self, fpath):
         """Loads the metadata from a reference SNIRF file
@@ -1136,31 +1141,41 @@ class Subject(object):
 
     def json_export(self):
         subj = self.subinfo
+        subjnames= self.pull_fnames()
 
-        # coordsystem
+        # coordsystem.json
+        name = 'coordsystem'
         temp = self.coordsystem.get_all_fields()
-        name = _make_filename(self.coordsystem.get_class_name().lower(), self.subinfo)
-        subj[name] = temp
+        subj[subjnames[name]] = temp
 
-        # optodes.tsv
-        fieldnames, valfiltered, jsontext = self.optodes.get_all_fields()
-        name = _make_filename(self.optodes.get_class_name().lower(), self.subinfo)
-        subj[name] = jsontext
+        # optodes.tsv + json sidecar
+        name = 'optodes'
+        fieldnames, valfiltered, temp = self.optodes.get_all_fields()
+        subj[subjnames[name]] = temp
 
-        # channels.tsv
-        fieldnames, valfiltered, jsontext = self.channels.get_all_fields()
-        name = _make_filename(self.channels.get_class_name().lower(), self.subinfo)
-        subj[name] = jsontext
+        sidecarname = _make_filename(name, subj, 'sidecar')
+        subj[sidecarname] = self.optodes._sidecar
 
-        # sidecar
+        # channels.tsv + json sidecar
+        name = 'channels'
+        fieldnames, valfiltered, temp = self.channels.get_all_fields()
+        subj[subjnames[name]] = temp
+
+        sidecarname = _make_filename(name, subj, 'sidecar')
+        subj[sidecarname] = self.channels._sidecar
+
+        # nirs sidecar
+        name = 'sidecar'
         temp = self.sidecar.get_all_fields()
-        name = _make_filename(self.sidecar.get_class_name().lower(), self.subinfo)
-        subj[name] = temp
+        subj[subjnames[name]] = temp
 
-        # event.tsv
-        fieldnames, valfiltered, jsontext = self.events.get_all_fields()
-        name = _make_filename(self.events.get_class_name().lower(), self.subinfo)
-        subj[name] = jsontext
+        # event.tsv + json sidecar
+        name = 'events'
+        fieldnames, valfiltered, temp = self.events.get_all_fields()
+        subj[subjnames[name]] = temp
+
+        sidecarname = _make_filename(name, subj, 'sidecar')
+        subj[sidecarname] = self.events._sidecar
 
         # participant.tsv
         fields = self.participants
@@ -1176,41 +1191,67 @@ class Subject(object):
         return text
 
 
-def snirf_to_bids(inputpath: str, outputpath: str = None, participants: dict = None):
+def snirf2bids(inputpath: str, outputpath: str = None):
     """Creates a BIDS-compliant folder structure (right now, just the metadata files) from a SNIRF file
 
         Args:
             inputpath: The file path to the reference SNIRF file
             outputpath: The file path/directory for the created BIDS metadata files
-            participants: A dictionary with participant information
+            participant: A dictionary with participant information
                 Example =
                     {participant_id: 'sub-01',
                      age: 34,
                      sex: 'M'}
             scans: A dictionary with SNIRF/run information and its acquisition time
     """
+    # checking directory
+    if os.path.isfile(inputpath):
+        subj = Subject(inputpath)
+    else:
+        return ValueError('Invalid directory to SNIRF file.')
 
-    subj = Subject(inputpath)
+    if outputpath is None:  # if output directory is not specified, it will be same as input
+        outputpath = os.path.dirname(inputpath)
+
+    if os.path.isdir(outputpath):
+        subjpath = 'sub' + str(subj.subinfo['sub-'])
+        outputpath = os.path.join(outputpath, subjpath)
+        if not os.path.exists(outputpath):
+            os.mkdir(outputpath)
+
+        if subj.subinfo['ses-'] is not None:
+            sespath = 'ses' + str(subj.subinfo['ses-'])
+            outputpath = os.path.join(outputpath, sespath)
+            if not os.path.exists(outputpath):
+                os.mkdir(outputpath)
+
+        outputpath = os.path.join(outputpath, 'nirs')
+        if not os.path.exists(outputpath):
+            os.mkdir(outputpath)
+    else:
+        return ValueError('Invalid directory to build BIDS folder.')
+
     subj.directory_export(outputpath)
-    fname = outputpath + '/participants.tsv'
+
+    # re-create source snirf file
+    snirfoutput = os.path.join(outputpath,os.path.basename(inputpath))
+    if not os.path.isfile(snirfoutput):
+        subj.SNIRF.save(snirfoutput)
 
     # This will probably work only with a single SNIRF file for now
+    fname = outputpath + '/participants.tsv'
     with open(fname, 'w', newline='') as f:
-        if participants is None:
-            writer = csv.DictWriter(f, fieldnames=list(subj.participants.keys()), delimiter="\t", quotechar='"')
-            writer.writeheader()
-            writer.writerow({'participant_id': 'sub-' + subj.get_subj()})
-        else:
-            writer = csv.DictWriter(f, fieldnames=list(participants.keys()), delimiter="\t", quotechar='"')
-            writer.writeheader()
-            writer.writerow(participants)
+        writer = csv.DictWriter(f, fieldnames=list(subj.participants.keys()), delimiter="\t", quotechar='"')
+        writer.writeheader()
+        writer.writerow(subj.participants)
     f.close()
 
-    # scans.tsv output
-    # same thing as participants for scans
+    # scans.tsv output, same thing as participants for scans
     fname = outputpath + '/scans.tsv'
     with open(fname, 'w', newline='') as f:
         writer = csv.DictWriter(f, fieldnames=list(subj.scans.keys()), delimiter="\t", quotechar='"')
         writer.writeheader()
-        writer.writerow({'filename': subj.scans['filename'], 'acq_time': subj.scans['acq_time']})
+        writer.writerow(subj.scans)
     f.close()
+
+    return subj.json_export()
