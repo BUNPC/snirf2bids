@@ -25,9 +25,9 @@ Will be maintained by [Boston University Neurophotonics Center(BUNPC)](https://g
 
 ## Create BIDS-compliant Structures
 `def snirf2bids(inputpath: str, outputpath: str = None):` creates a BIDS structure from a SNIRF file.   
-Inputpath: The file path to the reference SNIRF file   
-Outputpath: The file path/directory for the created BIDS metadata files   
-Participants: A dictionary with participant information   
+`inputpath`: The file path to the reference SNIRF file.   
+`outputpath`: The file path/directory for the created BIDS metadata files.   
+   
 ```python
 def snirf2bids(inputpath: str, outputpath: str = None):
      if os.path.isfile(inputpath):
@@ -80,8 +80,8 @@ def snirf2bids(inputpath: str, outputpath: str = None):
     f.close()
  ```
  ## Create BIDS-compliant Metadata Directory
- ` def directory_export(self, fpath: str):` creats BIDS-compliant metadata files based on information stored in `subject` class.
- 
+ ` def directory_export(self, fpath: str):` creats BIDS-compliant metadata files based on information stored in `subject` class.  
+ `fpath`: The file path that points to the folder where we intend to save the metadata files in.
 
 ```python
         def directory_export(self, fpath: str):
