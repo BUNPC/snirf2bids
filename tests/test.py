@@ -28,7 +28,6 @@ class FakeTest(unittest.TestCase):
         # load standard data
         with open(self._test_files[0], 'r') as f:
             reference = json.loads(f.read())
-        f.close()
 
         self.assertTrue(sorted(temp.items()) == sorted(reference.items()))
 
