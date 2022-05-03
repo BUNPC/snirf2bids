@@ -275,6 +275,36 @@ def _tsv_to_json(tsv_dict):
     return field_temp + value_temp
 
 
+def _get_detector_labels(s: Snirf):
+    """
+    Gets the detector labels from a SNIRF file or generate them if they do not exist
+    """
+    if s.nirs[0].probe.detectorLabels is not None:
+        return s.nirs[0].probe.detectorLabels
+    if s.nirs[0].probe.detectorPos2D is not None:
+        n_det = np.shape(s.nirs[0].probe.detectorPos2D)[0]
+    elif s.nirs[0].probe.detectorPos2D is not None:
+        n_det = np.shape(s.nirs[0].probe.detectorPos3D)[0]
+    else:
+        return np.array([]), 0
+    return ['D' + str(i + 1) for i in range(n_det)], n_det
+    
+
+def _get_source_labels(s: Snirf):
+    """
+    Gets the source labels from a SNIRF file or generate them if they do not exist
+    """
+    if s.nirs[0].probe.sourceLabels is not None:
+        return s.nirs[0].probe.sourceLabels
+    if s.nirs[0].probe.sourcePos2D is not None:
+        n_src = np.shape(s.nirs[0].probe.sourcePos2D)[0]
+    elif s.nirs[0].probe.sourcePos2D is not None:
+        n_src = np.shape(s.nirs[0].probe.sourcePos3D)[0]
+    else:
+        return np.array([]), 0
+    return ['S' + str(i + 1) for i in range(n_src)], n_src
+
+
 class Field:
     """Class which encapsulates fields inside a Metadata class
 
@@ -703,9 +733,9 @@ class TSV(Metadata):
         for one in valfiltered:
             looptemp = ''
             for j in range(len(one) - 1):
-                looptemp = one[j] + '\t'
+                looptemp = str(one[j]) + '\t'
                 temp = temp + looptemp
-            looptemp = one[len(one) - 1] + '\n'
+            looptemp = str(one[len(one) - 1]) + '\n'
             temp = temp + looptemp
 
         return fieldnames, valfiltered, temp
@@ -760,7 +790,7 @@ class Optodes(TSV):
             self._sidecar = self.make_sidecar()
         else:
             super().__init__()
-
+    
     def load_from_SNIRF(self, fpath):
         """Creates the Optodes class based on information from a reference SNIRF file
 
@@ -771,20 +801,20 @@ class Optodes(TSV):
         self._source_snirf = fpath
 
         with Snirf(fpath) as s:
-            self._fields['name'].value = np.append(s.nirs[0].probe.sourceLabels,
-                                                   s.nirs[0].probe.detectorLabels)
-            self._fields['type'].value = np.append(['source'] * len(s.nirs[0].probe.sourceLabels),
-                                                   ['detector'] * len(s.nirs[0].probe.detectorLabels))
-            if s.nirs[0].probe.detectorPos2D is None and \
-                    s.nirs[0].probe.sourcePos2D is None:
+            src_labels, src_n = _get_source_labels(s)
+            det_labels, det_n = _get_detector_labels(s)
+            self._fields['name'].value = np.append(src_labels,
+                                                   src_labels)
+            self._fields['type'].value = np.append(['source'] * src_n,
+                                                   ['detector'] * det_n)
+            if s.nirs[0].probe.detectorPos2D is None and s.nirs[0].probe.sourcePos2D is None:
                 self._fields['x'].value = np.append(s.nirs[0].probe.sourcePos3D[:, 0],
                                                     s.nirs[0].probe.detectorPos3D[:, 0])
                 self._fields['y'].value = np.append(s.nirs[0].probe.sourcePos3D[:, 1],
                                                     s.nirs[0].probe.detectorPos3D[:, 1])
                 self._fields['z'].value = np.append(s.nirs[0].probe.sourcePos3D[:, 2],
                                                     s.nirs[0].probe.detectorPos3D[:, 2])
-            elif s.nirs[0].probe.detectorPos3D is None and \
-                    s.nirs[0].probe.sourcePos3D is None:
+            elif s.nirs[0].probe.detectorPos3D is None and s.nirs[0].probe.sourcePos3D is None:
                 self._fields['x'].value = np.append(s.nirs[0].probe.sourcePos2D[:, 0],
                                                     s.nirs[0].probe.detectorPos2D[:, 0])
                 self._fields['y'].value = np.append(s.nirs[0].probe.sourcePos2D[:, 1],
@@ -819,8 +849,8 @@ class Channels(TSV):
         self._source_snirf = fpath
 
         with Snirf(fpath) as s:
-            source = s.nirs[0].probe.sourceLabels
-            detector = s.nirs[0].probe.detectorLabels
+            src_labels, n_src = _get_source_labels(s)
+            det_labels, n_det = _get_detector_labels(s)
             wavelength = s.nirs[0].probe.wavelengths
 
             name = []
@@ -834,14 +864,13 @@ class Channels(TSV):
                 detector_index = s.nirs[0].data[0].measurementList[i].detectorIndex
                 wavelength_index = s.nirs[0].data[0].measurementList[i].wavelengthIndex
 
-                name.append(source[source_index - 1] + '-' + detector[detector_index - 1] + '-' +
+                name.append(src_labels[source_index - 1] + '-' + det_labels[detector_index - 1] + '-' +
                             str(wavelength[wavelength_index - 1]))
 
                 if s.nirs[0].data[0].measurementList[i].dataTypeLabel is None:
                     index = s.nirs[0].data[0].measurementList[i].dataType
                 else:
                     index = s.nirs[0].data[0].measurementList[i].dataTypeLabel
-
                 try:
                     temp = _getdefault('BIDS_fNIRS_measurement_type.json', str(index))
                 except TypeError:
@@ -850,8 +879,8 @@ class Channels(TSV):
                     temp = 'MISC'
                 ctype.append(temp)
 
-                source_list.append(source[source_index - 1])
-                detector_list.append(detector[detector_index - 1])
+                source_list.append(src_labels[source_index - 1])
+                detector_list.append(det_labels[detector_index - 1])
                 wavelength_nominal[i] = wavelength[wavelength_index - 1]
 
             if len(s.nirs[0].aux) > 0:
