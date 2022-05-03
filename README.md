@@ -1,6 +1,11 @@
 [![snirf2bids](https://img.shields.io/pypi/v/snirf2bids?color=blue&label=snirf2bids&style=flat-square)](https://pypi.org/project/snirf2bids/0.1.7/)
 ![tests](https://img.shields.io/badge/tests-passing-green?style=flat-square&logo=github)
 ![python](https://img.shields.io/pypi/pyversions/snirf2bids?color=green&style=flat-square)
+
+# Installation
+
+`pip install snirf2bids`
+
 # Table of Contents
 - [Introduction](#snirf2bids)
 - [Features](#features)
