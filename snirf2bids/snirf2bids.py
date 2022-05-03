@@ -43,9 +43,6 @@ def _getdefault(fpath, key):
     fields = json.load(file)
     
     file.close()
-
-    if 'RequirementLevel' in fields[key]:
-        fields[key].pop('RequirementLevel', None)
         
     return fields[key]
 
@@ -579,18 +576,21 @@ class JSON(Metadata):
         with open(filedir, 'w') as file:
             json.dump(fields, file, indent=4)
         # self._fields['path2origin'].value = filedir
-
+            
     def get_all_fields(self):
         temp = {}
         fields = self._fields
         defaults = self.default_fields()[0]
+        if 'RequirementLevel' in defaults:
+            del defaults['RequirementLevel']
+        if 'RequirementLevel' in fields:
+            del fields['RequirementLevel']
         for one in fields:
             value = getattr(self, one)
             if value is not None:
                 temp[one] = value
             elif value is None and defaults[one] == 'REQUIRED':  # this will include all empty required fields
                 temp[one] = ''
-
         return temp
 
 
