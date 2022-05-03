@@ -41,8 +41,12 @@ def _getdefault(fpath, key):
     filepaths = files("defaults")
     file = open(filepaths / fpath)
     fields = json.load(file)
+    
     file.close()
 
+    if 'RequirementLevel' in fields[key]:
+        fields[key].pop('RequirementLevel', None)
+        
     return fields[key]
 
 
