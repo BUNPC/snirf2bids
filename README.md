@@ -4,25 +4,21 @@
 # Table of Contents
 - [Introduction](#snirf2bids)
 - [Features](#features)
-  - [Create BIDS Compliant Structures](#create-bids-compliant-structures)
-  - [Create BIDS-compliant Metadata Directory](#create-bids-compliant-metadata-directory)
-  - [Create BIDS-compliant Metadata Files in JSON Format](#create-bids-compliant-metadata-files-in-json-format)
+  - [Create BIDS Structures](#create-bids-compliant-structures)
+  - [Create BIDS Metadata Directory](#create-bids-compliant-metadata-directory)
+  - [Create BIDS Metadata Files in JSON Format](#create-bids-compliant-metadata-files-in-json-format)
 
-- [Code Generation](#code-generation)
-- [Maintainers](#maintainers)
+- [BIDS implementation](#bids-implementation)
 - [Contributors](#contributors)
 
- 
-
 # snirf2BIDS
-Conveniently generate BIDS structure from `.snirf` files.  
-Developed by BU BME Senior Design Group 3 (2022): Christian Arthur, Jeonghoon Choi, Jiazhen Liu, Juncheng Zhang.   
-Will be maintained by [Boston University Neurophotonics Center(BUNPC)](https://github.com/BUNPC).  
+Conveniently generate BIDS structures from [SNIRF files](https://github.com/fnirs/snirf).  
+
 [snirf2BIDS](https://pypi.org/project/snirf2bids/) requires [Python](https://www.python.org/downloads/) >3 and [h5py](https://www.h5py.org/) >3.6.
 
 # Features
 
-## Create BIDS-compliant Structures
+## Create BIDS Structures
 `def snirf2bids(inputpath: str, outputpath: str = None):` creates a BIDS structure from a SNIRF file.   
 `inputpath`: The file path to the reference SNIRF file.   
 `outputpath`: The file path/directory for the created BIDS metadata files.   
@@ -78,8 +74,8 @@ def snirf2bids(inputpath: str, outputpath: str = None):
         writer.writerow(subj.scans)
     f.close()
  ```
- ## Create BIDS-compliant Metadata Directory
- ` def directory_export(self, fpath: str):` creats BIDS-compliant metadata files based on information stored in `subject` class.  
+ ## Create BIDS Metadata Directory
+ ` def directory_export(self, fpath: str):` creates BIDS-compliant metadata text files based on information stored in `subject` class.  
  `fpath`: The file path that points to the folder where we intend to save the metadata files in.
 
 ```python
@@ -95,7 +91,7 @@ def snirf2bids(inputpath: str, outputpath: str = None):
         self.events.export_sidecar(self.subinfo, fpath)
 
 ``` 
-## Create BiDS-compliant Metadata Files in JSON Format
+## Create BIDS Metadata Files in JSON Format
 ` def json_export(self):` creats BIDS-compliant metadata files in JSON format. Returns a string containing the metadata file names and its content.
 
 ```python
@@ -151,20 +147,20 @@ def snirf2bids(inputpath: str, outputpath: str = None):
         return text
 
 ``` 
-# Code Generation
+# BIDS implementation
 
-The fields and descriptions in JSON files are generated based on the latest [Brain Imaging Data Structure v1.7.1-dev](https://bids-specification--802.org.readthedocs.build/en/stable/04-modality-specific-files/11-functional-near-infrared-spectroscopy.html#channels-description-_channelstsv) 
+The fields and descriptions in JSON files are based on the latest [Brain Imaging Data Structure v1.7.1-dev](https://bids-specification--802.org.readthedocs.build/en/stable/04-modality-specific-files/11-functional-near-infrared-spectroscopy.html#channels-description-_channelstsv) 
 and [SNIRF specification](https://github.com/fNIRS/snirf).
 
-# Maintainers
+# Contributors
+
+Developed by BU BME Senior Design Group 3 (2022): Christian Arthur, Jeonghoon Choi, Jiazhen Liu, Juncheng Zhang and the [Boston University Neurophotonics Center](https://github.com/BUNPC).
 [@Christian Arthur :melon:](https://github.com/chrsthur)<br>
 [@Juncheng Zhang :tangerine:](https://github.com/andyzjc)<br>
 [@Jeonghoon Choi :pineapple:](https://github.com/jeonghoonchoi)<br>
 [@Jiazhen Liu :grapes:](https://github.com/ELISALJZ)<br>
-[Boston University Neurophotonics Center(BUNPC)](https://github.com/BUNPC)<br>
 
-# Contributors
-This project exsists thanks to all people who contribute. <br>
+This project exists thanks to: <br>
 <center class= "half">
 <a href="https://github.com/sstucker">
 <img src="https://github.com/sstucker.png" width="50" height="50">
