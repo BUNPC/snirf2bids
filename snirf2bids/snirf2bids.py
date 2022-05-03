@@ -3,13 +3,14 @@
 Maintained by the Boston University Neurophotonics Center
 """
 
-import numpy as np
-import json
-from pysnirf2 import Snirf
-from warnings import warn
-from importlib_resources import files
-import os
 import csv
+import json
+import os
+from warnings import warn
+
+import numpy as np
+from importlib_resources import files
+from pysnirf2 import Snirf
 
 try:
     from snirf2bids.__version__ import __version__ as __version__
@@ -159,7 +160,7 @@ def _pull_participant(field, fpath=None):
     """
 
     if fpath is not None:
-        with Snirf(fpath) as s:
+        with Snirf(fpath, 'r') as s:
             if s.nirs[0].metaDataTags.__contains__(field):
                 # make sure the field exists, and then pull
                 value = s.nirs[0].metaDataTags.__getattribute__(field)
@@ -200,6 +201,8 @@ def _pull_scans(info, field, fpath=None):
                 date = s.nirs[0].metaDataTags.MeasurementDate
                 time = s.nirs[0].metaDataTags.MeasurementTime
                 hour_minute_second = time[:8]
+                decimal = ''
+                zone = ''
                 if '.' in time:
                     for x in time[8:]:
                         if x.isdigit() or x == '.':
@@ -227,8 +230,8 @@ def _compliancy_check(bids):
     Args:
         bids: Subject class object that is trying to be exported
     """
-    subj_object = bids.__dict__.keys()
-    for x in subj_object:
+    run_object = bids.__dict__.keys()
+    for x in run_object:
         if x in ['channels', 'coordsystem', 'events', 'optodes', 'sidecar']:
             class_spec = bids.__dict__[x].default_fields()[0]
             for field in class_spec.keys():
@@ -248,7 +251,6 @@ def _compliancy_check(bids):
 
 
 def _tsv_to_json(tsv_dict):
-
     fields = list(tsv_dict.keys())
     values = list(tsv_dict.values())
     field_temp = ''
@@ -649,7 +651,6 @@ class TSV(Metadata):
                 row = row.split('\t')
                 rows = np.vstack((rows, row))
 
-
         for i in range(len(rows[0])):
             onename = rows[0][i]
             self._fields[onename].value = rows[1:, i]
@@ -675,7 +676,6 @@ class TSV(Metadata):
         filedir = _makefiledir(info, classname, fpath, sidecar)
         with open(filedir, 'w') as file:
             json.dump(self._sidecar, file, indent=4)
-
 
     def get_all_fields(self):
         # VARIABLE DECLARATION
@@ -907,13 +907,14 @@ class Events(TSV):
         with Snirf(fpath) as s:
             for nirs in s.nirs:
                 for stim in nirs.stim:
-                    if temp is None:
-                        temp = stim.data
-                        label = np.array([stim.name] * stim.data.shape[0])
-                        temp = np.append(temp, np.reshape(label, (-1, 1)), 1)
-                    else:
-                        new = np.append(stim.data, np.reshape(np.array([stim.name] * stim.data.shape[0]), (-1, 1)), 1)
-                        temp = np.append(temp, new, 0)
+                    if stim.data.ndim > 1 and np.shape(stim.data)[1] > 2:
+                        if temp is None:
+                            temp = stim.data
+                            label = np.array([stim.name] * stim.data.shape[0])
+                            temp = np.append(temp, np.reshape(label, (-1, 1)), 1)
+                        else:
+                            new = np.append(stim.data, np.reshape(np.array([stim.name] * stim.data.shape[0]), (-1, 1)), 1)
+                            temp = np.append(temp, new, 0)
 
             temp = temp[np.argsort(temp[:, 0])]
             self._fields['onset'].value = temp[:, 0]
@@ -954,7 +955,7 @@ class Sidecar(JSON):
         with Snirf(fpath) as s:
             self._fields['SamplingFrequency'].value = np.mean(np.diff(np.array(s.nirs[0].data[0].time)))
             self._fields['NIRSChannelCount'].value = len(s.nirs[0].data[0].measurementList)
-
+            self._fields['TaskName'].value = _pull_label(fpath, 'task-')
             if s.nirs[0].probe.detectorPos2D is None \
                     and s.nirs[0].probe.sourcePos2D is None:
                 self._fields['NIRSSourceOptodeCount'].value = len(s.nirs[0].probe.sourcePos3D)
@@ -965,25 +966,22 @@ class Sidecar(JSON):
                 self._fields['NIRSDetectorOptodeCount'].value = len(s.nirs[0].probe.detectorPos2D)
 
 
-class Subject(object):
-    """'Subject' Class
-
-    Class object that encapsulates a single 'run' (for now) with fields containing the metadata and
-    'subject'/run information
+class SnirfRun(object):
+    """Encapsulates a single SNIRF file 'run' with fields containing the metadata.
 
     Attributes:
-        coordsystem: Contains a Coordsystem class object for a specific 'subject'/run
-        optodes: Contains an Optodes class object for a specific 'subject'/run
-        channels: Contains a channels class object for a specific 'subject'/run
-        sidecar: Contains a Sidecar (_nirs.JSON) class object for a specific 'subject'/run
-        events: Contains an Events class object for a specific 'subject'/run
-        subinfo: Contains the 'subject'/run information related to the data stored in a 'Subject' object
+        coordsystem: Contains a Coordsystem class object
+        optodes: Contains an Optodes class object
+        channels: Contains a channels class object
+        sidecar: Contains a Sidecar (_nirs.JSON) class object
+        events: Contains an Events class object
+        subinfo: Contains the `Run`/run information related to the data stored in a `Run` object
         participants: Contains the metadata related to the participants.tsv file
 
     """
 
     def __init__(self, fpath=None):
-        """Constructor for the 'Subject' class"""
+        """Constructor for the `Run` class"""
         self.SNIRF = Snirf(fpath)
 
         self.coordsystem = Coordsystem(fpath=fpath)
@@ -1090,7 +1088,7 @@ class Subject(object):
         self.sidecar.load_from_SNIRF(fpath)
 
     def get_subj(self):
-        """Obtains the subject ID/number for a particular 'subject'/run
+        """Obtains the subject ID/number for a particular `Run`/run
 
             Returns:
                 The subject ID/number (returns an empty string if there is no information)
@@ -1102,7 +1100,7 @@ class Subject(object):
             return self.subinfo['sub-']
 
     def get_ses(self):
-        """Obtains the session ID/number for a particular 'subject'/run
+        """Obtains the session ID/number for a particular `Run`/run
 
             Returns:
                 The session ID/number (returns an empty string if there is no information)
@@ -1114,7 +1112,7 @@ class Subject(object):
             return self.subinfo['ses-']
 
     def directory_export(self, fpath: str):
-        """Exports/creates the BIDS-compliant metadata files based on information stored in the 'subject' class object
+        """Exports/creates the BIDS-compliant metadata files based on information stored in the `Run` class object
 
             Args:
                 outputFormat: The target destination and indirectly, the output format of the metadata file
@@ -1139,7 +1137,7 @@ class Subject(object):
 
     def json_export(self):
         subj = self.subinfo
-        subjnames= self.pull_fnames()
+        subjnames = self.pull_fnames()
 
         # coordsystem.json
         name = 'coordsystem'
@@ -1189,8 +1187,8 @@ class Subject(object):
         return text
 
 
-def snirf2bids(inputpath: str, outputpath: str = None):
-    """Creates a BIDS-compliant folder structure (right now, just the metadata files) from a SNIRF file
+def snirf2bids(inputpath: str, outputpath: str = None) -> str:
+    """Creates BIDS metadata text files from a SNIRF file
 
         Args:
             inputpath: The file path to the reference SNIRF file
@@ -1204,7 +1202,7 @@ def snirf2bids(inputpath: str, outputpath: str = None):
     """
     # checking directory
     if os.path.isfile(inputpath):
-        subj = Subject(inputpath)
+        run = SnirfRun(inputpath)
     else:
         return ValueError('Invalid directory to SNIRF file.')
 
@@ -1229,27 +1227,31 @@ def snirf2bids(inputpath: str, outputpath: str = None):
     else:
         return ValueError('Invalid directory to build BIDS folder.')
 
-    subj.directory_export(outputpath)
+    run.directory_export(outputpath)
 
     # re-create source snirf file
-    snirfoutput = os.path.join(outputpath,os.path.basename(inputpath))
+    snirfoutput = os.path.join(outputpath, os.path.basename(inputpath))
     if not os.path.isfile(snirfoutput):
-        subj.SNIRF.save(snirfoutput)
+        run.SNIRF.save(snirfoutput)
 
     # This will probably work only with a single SNIRF file for now
     fname = outputpath + '/participants.tsv'
     with open(fname, 'w', newline='') as f:
-        writer = csv.DictWriter(f, fieldnames=list(subj.participants.keys()), delimiter="\t", quotechar='"')
+        writer = csv.DictWriter(f, fieldnames=list(run.participants.keys()), delimiter="\t", quotechar='"')
         writer.writeheader()
-        writer.writerow(subj.participants)
-
+        writer.writerow(run.participants)
 
     # scans.tsv output, same thing as participants for scans
     fname = outputpath + '/scans.tsv'
     with open(fname, 'w', newline='') as f:
-        writer = csv.DictWriter(f, fieldnames=list(subj.scans.keys()), delimiter="\t", quotechar='"')
+        writer = csv.DictWriter(f, fieldnames=list(run.scans.keys()), delimiter="\t", quotechar='"')
         writer.writeheader()
-        writer.writerow(subj.scans)
+        writer.writerow(run.scans)
+
+    return run.json_export()
 
 
-    return subj.json_export()
+def snirf2json(path_to_snirf: str) -> str:
+    run = SnirfRun(fpath=path_to_snirf)
+    return run.json_export()
+

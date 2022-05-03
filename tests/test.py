@@ -21,7 +21,7 @@ class FakeTest(unittest.TestCase):
 
     def test_json_output(self):
         # create subject
-        subj1 = s2b.Subject(fpath=self._test_files[1])
+        subj1 = s2b.SnirfRun(fpath=self._test_files[1])
         jsontext = subj1.json_export()
         temp = json.loads(jsontext)
 
