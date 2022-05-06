@@ -286,8 +286,8 @@ def _get_detector_labels(s: Snirf):
     elif s.nirs[0].probe.detectorPos2D is not None:
         n_det = np.shape(s.nirs[0].probe.detectorPos3D)[0]
     else:
-        return np.array([]), 0
-    return ['D' + str(i + 1) for i in range(n_det)], n_det
+        return np.array([])
+    return np.array(['D' + str(i + 1) for i in range(n_det)], dtype='O')
     
 
 def _get_source_labels(s: Snirf):
@@ -301,8 +301,8 @@ def _get_source_labels(s: Snirf):
     elif s.nirs[0].probe.sourcePos2D is not None:
         n_src = np.shape(s.nirs[0].probe.sourcePos3D)[0]
     else:
-        return np.array([]), 0
-    return ['S' + str(i + 1) for i in range(n_src)], n_src
+        return np.array([])
+    return np.array(['S' + str(i + 1) for i in range(n_src)], dtype='O')
 
 
 class Field:
@@ -801,8 +801,10 @@ class Optodes(TSV):
         self._source_snirf = fpath
 
         with Snirf(fpath) as s:
-            src_labels, src_n = _get_source_labels(s)
-            det_labels, det_n = _get_detector_labels(s)
+            src_labels = _get_source_labels(s)
+            det_labels = _get_detector_labels(s)
+            src_n = len(src_labels)
+            det_n = len(det_labels)
             self._fields['name'].value = np.append(src_labels,
                                                    src_labels)
             self._fields['type'].value = np.append(['source'] * src_n,
@@ -849,10 +851,9 @@ class Channels(TSV):
         self._source_snirf = fpath
 
         with Snirf(fpath) as s:
-            src_labels, n_src = _get_source_labels(s)
-            det_labels, n_det = _get_detector_labels(s)
+            src_labels = _get_source_labels(s)
+            det_labels = _get_detector_labels(s)
             wavelength = s.nirs[0].probe.wavelengths
-
             name = []
             source_list = []
             detector_list = []
