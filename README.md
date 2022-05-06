@@ -6,16 +6,6 @@
 
 `pip install snirf2bids`
 
-# Table of Contents
-- [Introduction](#snirf2bids)
-- [Features](#features)
-  - [Create BIDS Structures](#create-bids-compliant-structures)
-  - [Create BIDS Metadata Directory](#create-bids-compliant-metadata-directory)
-  - [Create BIDS Metadata Files in JSON Format](#create-bids-compliant-metadata-files-in-json-format)
-
-- [BIDS implementation](#bids-implementation)
-- [Contributors](#contributors)
-
 # snirf2BIDS
 Conveniently generate BIDS structures from [SNIRF files](https://github.com/fnirs/snirf).  
 
