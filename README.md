@@ -2,14 +2,14 @@
 ![tests](https://img.shields.io/badge/tests-passing-green?style=flat-square&logo=github)
 ![python](https://img.shields.io/pypi/pyversions/snirf2bids?color=green&style=flat-square)
 
-# Installation
-
-`pip install snirf2bids`
-
 # snirf2BIDS
 Conveniently generate BIDS structures from [SNIRF files](https://github.com/fnirs/snirf).  
 
 [snirf2BIDS](https://pypi.org/project/snirf2bids/) requires [Python](https://www.python.org/downloads/) >3 and [h5py](https://www.h5py.org/) >3.6.
+
+# Installation
+
+`pip install snirf2bids`
 
 # Features
 - Create BIDS text files from a SNIRF file
