@@ -648,32 +648,24 @@ class TSV(Metadata):
             json.dump(self._sidecar, file, indent=4)
 
     def get_all_fields(self):
-        # VARIABLE DECLARATION
-        temp = ''
-        fields = list(self._fields)[1:]  # extract all fields
-        values = list(self._fields.values())[1:]  # extract all values
-        values = [values[i].value for i in range(len(values))]  # organize all values
-
-        # VARIABLE ORGANIZATION
-        fieldnames = []  # filter out the fieldnames with empty fields, and organize into row structure
-        for i in range(len(fields) - 1):
-            if values[i] is not None:
-                fieldnames = np.append(fieldnames, fields[i])
-                name = fields[i] + '\t'
-                temp = temp + name
-        name = fields[len(fields) - 1] + '\n'
-        temp = temp + name
-        valfiltered = list(filter(None.__ne__, values))  # remove all None fields
-        valfiltered = np.transpose(valfiltered)  # transpose into correct row structure
+        fields = list(self._fields)[1:]
+        values = list(self._fields.values())[1:]
+        entries_by_col = [values[i].value for i in range(len(values))]
         
-        if len(valfiltered) > 0:
-            formatted = io.StringIO(newline='')
+        mask = [val is not None for val in entries_by_col]
+        columns = [entries_by_col[i] for i in range(len(mask)) if mask[i]] 
+        headers = [fields[i] for i in range(len(mask)) if mask[i]] 
+        
+        assert len(columns) == len(headers), 'failed to parse TSV fields'
+        
+        if len(headers) > 0:
+            formatted = io.StringIO('wb', newline='')
             writer = csv.writer(formatted, delimiter='\t')
-            writer.writerow(list(fieldnames))
-            for i in range(len(valfiltered[0])):  # For each row
-                writer.writerow([str(col[i]) for col in valfiltered])
+            writer.writerow(headers)
+            for i in range(len(columns[0])):  # For each row
+                writer.writerow([str(col[i]) for col in columns])
 
-        return fieldnames, valfiltered, formatted.getvalue()
+        return headers, columns, formatted.getvalue()
 
 
 class Coordsystem(JSON):
@@ -1128,10 +1120,10 @@ def snirf2bids(path_to_snirf: str, outputpath: str = None) -> str:
         outputpath = os.path.join(os.path.split(path_to_snirf)[0])  # If no output location provided, put files next to input SNIRF
     for item in list(s.keys()):
         if item.endswith('.json'):
-            with open(os.path.join(outputpath, item), 'w') as f:
+            with open(os.path.join(outputpath, item), 'w', newline='') as f:
                 f.write(s[item])
         elif item.endswith('.tsv'):
-            with open(os.path.join(outputpath, item), 'w') as f:
+            with open(os.path.join(outputpath, item), 'w', newline='') as f:
                 f.write(s[item])
 
 def snirf2json(path_to_snirf: str) -> str:
