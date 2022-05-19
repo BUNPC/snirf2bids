@@ -187,31 +187,6 @@ def _pull_scans(info, field, fpath=None):
             return date + 'T' + hour_minute_second + decimal + zone
 
 
-def _compliancy_check(bids):
-    """Checks the BIDS compliancy by checking the values of required field. Prints Warning of anything is missing.
-    Args:
-        bids: Subject class object that is trying to be exported
-    """
-    run_object = bids.__dict__.keys()
-    for x in run_object:
-        if x in ['channels', 'coordsystem', 'events', 'optodes', 'sidecar']:
-            class_spec = bids.__dict__[x].default_fields()[0]
-            for field in class_spec.keys():
-                if class_spec[field] == 'REQUIRED' and bids.__dict__[x]._fields[field].value is None:
-                    message = 'FATAL: The field ' + field + ' is REQUIRED in the ' + x.capitalize() + ' class'
-                    warn(message)
-        elif x in ['subinfo']:
-            pass
-        elif x in ['participants', 'scans']:
-            class_spec = _getdefault('BIDS_fNIRS_subject_folder.json', x + '.tsv')
-            for field in class_spec.keys():
-                if class_spec[field] == 'REQUIRED' and field not in bids.__dict__[x]:
-                    message = 'FATAL: The field ' + field + 'is REQUIRED in ' + x.capitalize()
-                    warn(message)
-        else:
-            raise ValueError('There is an invalid field ' + x + ' within your BIDS object')
-
-
 def _tsv_to_json(tsv_dict):
     fields = list(tsv_dict.keys())
     values = list(tsv_dict.values())
