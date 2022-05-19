@@ -1,6 +1,6 @@
-[![snirf2bids](https://img.shields.io/pypi/v/snirf2bids?color=blue&label=snirf2bids&style=flat-square)](https://pypi.org/project/snirf2bids)
-![tests](https://img.shields.io/badge/tests-passing-green?style=flat-square&logo=github)
-![python](https://img.shields.io/pypi/pyversions/snirf2bids?color=green&style=flat-square)
+![python](https://img.shields.io/pypi/pyversions/snirf2bids?color=green)
+[![pypi](https://img.shields.io/pypi/v/snirf2bids?color=blue)](https://pypi.org/project/snirf2bids)
+[![tests](https://github.com/BUNPC/snirf2bids/actions/workflows/test.yml/badge.svg)](https://github.com/BUNPC/snirf2bids/actions/workflows/test.yml)
 
 # snirf2BIDS
 Conveniently generate BIDS structures from [SNIRF files](https://github.com/fnirs/snirf).  
