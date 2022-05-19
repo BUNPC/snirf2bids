@@ -1128,4 +1128,4 @@ def snirf2bids(path_to_snirf: str, outputpath: str = None) -> str:
 
 def snirf2json(path_to_snirf: str) -> str:
     run = SnirfRun(fpath=path_to_snirf)
-    return json.dump(run.export_to_dict())
+    return json.dumps(run.export_to_dict())
