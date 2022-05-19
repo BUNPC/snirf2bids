@@ -78,7 +78,7 @@ def _makefiledir(info, classname, fpath, sidecar=None):
     """
 
     if info is not None:
-        filename = _make_filename(classname, info, sidecar)
+        filename = _make_filename_prefix(info)
         filedir = fpath + '/' + filename
     else:
         raise ValueError("No subject info for BIDS file naming reference")
@@ -86,50 +86,26 @@ def _makefiledir(info, classname, fpath, sidecar=None):
     return filedir
 
 
-def _make_filename(classname, info, parameter=None):
-    """Make file names based on file info
+def _make_filename_prefix(entities_dict: dict):
+    """Compose a file prefix from a dict of entities
 
         Args:
-            classname: The specific metadata class name (coordsystem, optodes, etc.)
-            info: Subject info field from the Subject class
-            parameter: Enter 'sidecar' when creating a TSV-accompanying sidecar file
-
+            entities (dict): The name entities i.e. `sub-`, `ses-`, `task-`
         Returns:
-            A BIDS formatted file name for the specific metadata file (in string)
-            Example: sub-01_task-tapping_nirs.json for a _nirs.json file
+            (str) An ordered file prefix
     """
-
-    subject = 'sub-' + info['sub-']
-    task = '_task-' + info['task-']
-
-    if info['ses-'] is None:
-        session = ''
-    else:
-        session = '_ses-' + info['ses-']
-
-    if info['run-'] is None:
-        run = ''
-    else:
-        run = '_run-' + info['run-']
-
-    if classname == 'optodes' and parameter == 'sidecar':
-        return subject + session + '_optodes.json'
-    elif classname == 'optodes' and parameter is None:
-        return subject + session + '_optodes.tsv'
-    elif classname == 'coordsystem':
-        return subject + session + '_coordsystem.json'
-    elif classname == 'events' and parameter == 'sidecar':
-        return subject + session + task + run + '_events.json'
-    elif classname == 'events' and parameter is None:
-        return subject + session + task + run + '_events.tsv'
-    elif classname == 'sidecar':
-        return subject + session + task + run + '_nirs.json'
-    elif classname == 'channels' and parameter == 'sidecar':
-        return subject + session + task + run + '_channels.json'
-    elif classname == 'channels' and parameter is None:
-        return subject + session + task + run + '_channels.tsv'
-    elif classname == 'scans' and parameter == 'init':
-        return subject + session + task + run
+    entities = list(entities_dict.keys())
+    name = 'sub-' + entities_dict['sub']
+    if 'ses' in entities:
+        name += '_ses-' + entities_dict['ses']
+    if 'task' in entities:
+        name += '_task-' + entities_dict['task']
+    # Misc entities
+    for entity in [entity for entity in entities if entity not in ['sub', 'ses', 'task', 'run']]:
+        name += '_' + entity + entities_dict[entity]
+    if 'run' in entities:
+        name += '_run-' + entities_dict['run']
+    return name
 
 
 def _pull_participant(field, fpath=None):
