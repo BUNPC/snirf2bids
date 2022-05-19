@@ -47,34 +47,19 @@ def _getdefault(fpath, key):
     return fields[key]
 
 
-def _pull_label(fpath, field):
-    """Pull information values from filename if it is BIDS compliant
-
-        Args:
-            fpath: The filepath to the SNIRF file of reference
-            field: The specific participant information field inquired (subject/session/run/task)
-
-        Returns:
-            The label for the specified field or None if the specific field cannot be found in the filename
+def _extract_entities_from_filename(fname: str):
     """
+        Args:
+        fname (str): BIDS-compliant filename
+    Returns
+        (dict): dictionary of entities and their values
+    """
+    ev_pairs = [ev for ev in os.path.split(fname)[-1].split('.')[0].split('_') if '-' in ev]
+    return {ev.split('-')[0]: ev.split('-')[1] for ev in ev_pairs}
 
-    if fpath is None:
-        return None
-    fname = fpath.split('/')[-1]
-    if field not in fname and field == 'sub-':
-        raise ValueError('Subject label is REQUIRED in file name')
-    elif field not in fname and field == 'task-':
-        raise ValueError('Task label is REQUIRED in file name')
-    else:
-        # if it is mentioned in the filename
-        info = fname.split('_')
-        for i in info:
-            if field in i:
-                if np.size(i.split(field)) == 1:
-                    return None
-                else:
-                    return i.split(field)[1]
-                    # need to get rid of non-alphanumeric for task name
+
+def _pull_entity_value(fname: str, entity_name: str):
+    return _extract_entities_from_filename(fname)[entity_name]
 
 
 def _makefiledir(info, classname, fpath, sidecar=None):
