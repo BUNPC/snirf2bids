@@ -2,7 +2,7 @@
 
 Maintained by the Boston University Neurophotonics Center
 """
-
+import io
 import csv
 import json
 import os
@@ -49,14 +49,14 @@ def _getdefault(fpath, key):
 
 def _extract_entities_from_filename(fname: str):
     """
-        Args:
+    Args:
         fname (str): BIDS-compliant filename
     Returns
         (dict): dictionary of entities and their values
     """
     ev_pairs = [ev for ev in os.path.split(fname)[-1].split('.')[0].split('_') if '-' in ev]
     return {ev.split('-')[0]: ev.split('-')[1] for ev in ev_pairs}
-
+    
 
 def _pull_entity_value(fname: str, entity_name: str):
     return _extract_entities_from_filename(fname)[entity_name]
@@ -140,13 +140,13 @@ def _pull_participant(field, fpath=None):
     return value
 
 
-def _pull_scans(info, field, fpath=None):
+def _pull_scans(entities, field, fpath=None):
     """Creates the scans.tsv file
 
         Only works for a single SNIRF file for now with a predefined set of fields
 
         Args:
-            info: subject information field (Subject.subinfo)
+            entities: subject information field (SnirfRun.entities)
             field: field within scans.tsv file (filename or acq_time)
             fpath: file path of snirf file to extract scans.tsv from. OPTIONAL
 
@@ -157,7 +157,7 @@ def _pull_scans(info, field, fpath=None):
         return None
     else:
         if field == 'filename':
-            return 'nirs/' + _make_filename('scans', info, 'init') + '.snirf'
+            return 'nirs/' + _make_filename_prefix(entities) + '.snirf'
         elif field == 'acq_time':
             with Snirf(fpath) as s:
                 date = s.nirs[0].metaDataTags.MeasurementDate
@@ -596,7 +596,7 @@ class TSV(Metadata):
 
         # TSV FILE WRITING
         with open(filedir, 'w', newline='') as tsvfile:
-            writer = csv.writer(tsvfile, dialect='excel-tab')  # writer setup in tsv format
+            writer = csv.writer(tsvfile, delimiter='\t', newline='\n')  # writer setup in tsv format
             writer.writerow(fieldnames)  # write fieldnames
             writer.writerows(valfiltered)  # write rows
 
@@ -665,16 +665,15 @@ class TSV(Metadata):
         temp = temp + name
         valfiltered = list(filter(None.__ne__, values))  # remove all None fields
         valfiltered = np.transpose(valfiltered)  # transpose into correct row structure
+        
+        if len(valfiltered) > 0:
+            formatted = io.StringIO(newline='')
+            writer = csv.writer(formatted, delimiter='\t')
+            writer.writerow(list(fieldnames))
+            for i in range(len(valfiltered[0])):  # For each row
+                writer.writerow([str(col[i]) for col in valfiltered])
 
-        for one in valfiltered:
-            looptemp = ''
-            for j in range(len(one) - 1):
-                looptemp = str(one[j]) + '\t'
-                temp = temp + looptemp
-            looptemp = str(one[len(one) - 1]) + '\n'
-            temp = temp + looptemp
-
-        return fieldnames, valfiltered, temp
+        return fieldnames, valfiltered, formatted.getvalue()
 
 
 class Coordsystem(JSON):
@@ -925,7 +924,7 @@ class Sidecar(JSON):
         with Snirf(fpath) as s:
             self._fields['SamplingFrequency'].value = np.mean(np.diff(np.array(s.nirs[0].data[0].time)))
             self._fields['NIRSChannelCount'].value = len(s.nirs[0].data[0].measurementList)
-            self._fields['TaskName'].value = _pull_label(fpath, 'task-')
+            self._fields['TaskName'].value = _pull_entity_value(fpath, 'task')
             if s.nirs[0].probe.detectorPos2D is None \
                     and s.nirs[0].probe.sourcePos2D is None:
                 self._fields['NIRSSourceOptodeCount'].value = len(s.nirs[0].probe.sourcePos3D)
@@ -945,7 +944,7 @@ class SnirfRun(object):
         channels: Contains a channels class object
         sidecar: Contains a Sidecar (_nirs.JSON) class object
         events: Contains an Events class object
-        subinfo: Contains the `Run`/run information related to the data stored in a `Run` object
+        entities: Contains the `Run`/run information related to the data stored in a `Run` object
         participants: Contains the metadata related to the participants.tsv file
 
     """
@@ -959,12 +958,9 @@ class SnirfRun(object):
         self.channels = Channels(fpath=fpath)
         self.sidecar = Sidecar(fpath=fpath)
         self.events = Events(fpath=fpath)
-        self.subinfo = {
-            'sub-': _pull_label(fpath, 'sub-'),
-            'ses-': _pull_label(fpath, 'ses-'),
-            'task-': self.pull_task(fpath),
-            'run-': _pull_label(fpath, 'run-')
-        }
+        self.entities = _extract_entities_from_filename(fpath)
+        assert 'sub' in self.entities, "Required entity 'sub' not found in SNIRF file name " + fpath 
+        assert 'task' in self.entities, "Required entity 'task' not found in SNIRF file name " + fpath
         self.participants = {
             # REQUIRED BY SNIRF SPECIFICATION #
             'participant_id': 'sub-' + self.get_subj(),
@@ -978,8 +974,8 @@ class SnirfRun(object):
             'strain_rrid': _pull_participant('strain_rrid', fpath=fpath)
         }
         self.scans = {
-            'filename': _pull_scans(self.subinfo, 'filename', fpath=fpath),
-            'acq_time': _pull_scans(self.subinfo, 'acq_time', fpath=fpath)
+            'filename': _pull_scans(self.entities, 'filename', fpath=fpath),
+            'acq_time': _pull_scans(self.entities, 'acq_time', fpath=fpath)
         }
 
     def pull_task(self, fpath=None):
@@ -993,57 +989,28 @@ class SnirfRun(object):
         """
 
         if self.sidecar.TaskName is None:
-            return _pull_label(fpath, 'task-')
+            return _pull_entity_value(fpath, 'task')
         else:
             return self.sidecar.TaskName
 
     def pull_fnames(self):
         """Check directory for files (not folders)
-
+        
         Returns:
-             A dictionary of file names for specific metadata files based on the existence of a session label
-             (different nomenclature) that are split into subject-level and session-level metadata files
-
-             subj_fnames: Contains a dictionary of metadata filenames that are on the subject level
-             ses_fnames: Contains a dictionary of metadata filenames that are on the session level
-
-        Notes:
-            Have to figure out how to do this based on the database structure
-            In the case of the test snirf file, there is no presence of:
-                1. session number
-                2. run number
-       """
-        subj_fnames = None
-        ses_fnames = None
-        # Case of No SESSION OR RUN NUMBER
-        if self.subinfo['ses-'] is None and self.subinfo['run-'] is None:
-            fields = ['optodes', 'coordsystem', 'sidecar', 'events', 'channels']
-            subj_fnames = {field: None for field in fields}
-            keylist = list(subj_fnames.keys())
-            for key in keylist:
-                subj_fnames[key] = _make_filename(key, self.subinfo)
-
-            ses_fnames = None
-
-        # CASE OF SESSION EXISTING
-        if self.subinfo['ses-'] is not None and self.subinfo['run-'] is None:
-            subj_fields = ['optodes', 'coordsystem']
-            ses_fields = ['sidecar', 'events', 'channels']
-
-            subj_fnames = {field: None for field in subj_fields}
-            keylist = list(subj_fnames.keys())
-            for key in keylist:
-                subj_fnames[key] = _make_filename(key, self.subinfo)
-
-            ses_fnames = {field: None for field in ses_fields}
-            keylist = list(ses_fnames.keys())
-            for key in keylist:
-                ses_fnames[key] = _make_filename(key, self.subinfo)
-
-        if ses_fnames is None:
-            return subj_fnames
-        else:
-            return subj_fnames | ses_fnames
+        A dictionary of file names for specific metadata files
+        """
+        fnames = {
+            'optodes': '{}_optodes.tsv',
+            'coordsystem': '{}_coordsystem.json',
+            'sidecar': '{}_nirs.json',
+            'events': '{}_events.tsv',
+            'channels': '{}_channels.tsv'
+        }
+        
+        for key in fnames.keys():
+            fnames[key] = fnames[key].format(_make_filename_prefix(self.entities))
+        
+        return fnames
 
     def load_from_snirf(self, fpath):
         """Loads the metadata from a reference SNIRF file
@@ -1064,10 +1031,10 @@ class SnirfRun(object):
                 The subject ID/number (returns an empty string if there is no information)
         """
 
-        if self.subinfo['sub-'] is None:
+        if self.entities['sub'] is None:
             return ''
         else:
-            return self.subinfo['sub-']
+            return self.entities['sub']
 
     def get_ses(self):
         """Obtains the session ID/number for a particular `Run`/run
@@ -1075,11 +1042,10 @@ class SnirfRun(object):
             Returns:
                 The session ID/number (returns an empty string if there is no information)
         """
-        if self.subinfo['ses-'] is None:
+        if 'ses' not in self.entities.keys():
             return None
         else:
-            # Pull out the sessions here with a function
-            return self.subinfo['ses-']
+            return self.entities['ses']
 
     def directory_export(self, fpath: str):
         """Exports/creates the BIDS-compliant metadata files based on information stored in the `Run` class object
@@ -1096,132 +1062,78 @@ class SnirfRun(object):
                 or a set of metadata files in a specified folder if the user chose the default or 'Folder' output format
         """
 
-        self.coordsystem.save_to_json(self.subinfo, fpath)
-        self.optodes.save_to_tsv(self.subinfo, fpath)
-        self.optodes.export_sidecar(self.subinfo, fpath)
-        self.channels.save_to_tsv(self.subinfo, fpath)
-        self.channels.export_sidecar(self.subinfo, fpath)
-        self.sidecar.save_to_json(self.subinfo, fpath)
-        self.events.save_to_tsv(self.subinfo, fpath)
-        self.events.export_sidecar(self.subinfo, fpath)
+        self.coordsystem.save_to_json(self.entities, fpath)
+        self.optodes.save_to_tsv(self.entities, fpath)
+        self.optodes.export_sidecar(self.entities, fpath)
+        self.channels.save_to_tsv(self.entities, fpath)
+        self.channels.export_sidecar(self.entities, fpath)
+        self.sidecar.save_to_json(self.entities, fpath)
+        self.events.save_to_tsv(self.entities, fpath)
+        self.events.export_sidecar(self.entities, fpath)
 
-    def json_export(self):
-        subj = self.subinfo
-        subjnames = self.pull_fnames()
+    def export_to_dict(self):
+        export = dict(self.entities)  # This is a deep copy. We want to return the entities we parsed to the client
+        fnames = self.pull_fnames()
 
         # coordsystem.json
-        name = 'coordsystem'
-        temp = self.coordsystem.get_all_fields()
-        subj[subjnames[name]] = temp
+        export[fnames['coordsystem']] = json.dumps(self.coordsystem.get_all_fields())
 
         # optodes.tsv + json sidecar
-        name = 'optodes'
         fieldnames, valfiltered, temp = self.optodes.get_all_fields()
-        subj[subjnames[name]] = temp
+        export[fnames['optodes']] = temp
 
-        sidecarname = _make_filename(name, subj, 'sidecar')
-        subj[sidecarname] = self.optodes._sidecar
+        sidecarname = fnames['optodes'].replace('.tsv', '.json')
+        export[sidecarname] = json.dumps(self.optodes._sidecar)
 
         # channels.tsv + json sidecar
-        name = 'channels'
         fieldnames, valfiltered, temp = self.channels.get_all_fields()
-        subj[subjnames[name]] = temp
+        export[fnames['channels']] = temp
 
-        sidecarname = _make_filename(name, subj, 'sidecar')
-        subj[sidecarname] = self.channels._sidecar
+        sidecarname = fnames['channels'].replace('.tsv', '.json')
+        export[sidecarname] = json.dumps(self.channels._sidecar)
 
         # nirs sidecar
-        name = 'sidecar'
-        temp = self.sidecar.get_all_fields()
-        subj[subjnames[name]] = temp
+        export[fnames['sidecar']] = json.dumps(self.sidecar.get_all_fields())
 
         # event.tsv + json sidecar
-        name = 'events'
         fieldnames, valfiltered, temp = self.events.get_all_fields()
-        subj[subjnames[name]] = temp
+        export[fnames['events']] = temp
 
-        sidecarname = _make_filename(name, subj, 'sidecar')
-        subj[sidecarname] = self.events._sidecar
+        sidecarname = fnames['events'].replace('.tsv', '.json')
+        export[sidecarname] = json.dumps(self.events._sidecar)
 
         # participant.tsv
         fields = self.participants
         text = _tsv_to_json(fields)
-        subj['participants.tsv'] = text
+        export[_make_filename_prefix(self.entities) + '_participants.tsv'] = text
 
         # scans.tsv
         fields = self.scans
         text = _tsv_to_json(fields)
-        subj['scans.tsv'] = text
+        export[_make_filename_prefix(self.entities) + '_scans.tsv'] = text
 
-        text = json.dumps(subj)
-        return text
+        return export
 
 
-def snirf2bids(inputpath: str, outputpath: str = None) -> str:
+def snirf2bids(path_to_snirf: str, outputpath: str = None) -> str:
     """Creates BIDS metadata text files from a SNIRF file
 
         Args:
-            inputpath: The file path to the reference SNIRF file
-            outputpath: The file path/directory for the created BIDS metadata files
-            participant: A dictionary with participant information
-                Example =
-                    {participant_id: 'sub-01',
-                     age: 34,
-                     sex: 'M'}
-            scans: A dictionary with SNIRF/run information and its acquisition time
+            inputpath (str): The file path to the reference SNIRF file
+            outputpath (str): (Optional) The file path/directory for the created BIDS metadata files
     """
-    # checking directory
-    if os.path.isfile(inputpath):
-        run = SnirfRun(inputpath)
-    else:
-        return ValueError('Invalid directory to SNIRF file.')
-
-    if outputpath is None:  # if output directory is not specified, it will be same as input
-        outputpath = os.path.dirname(inputpath)
-
-    if os.path.isdir(outputpath):
-        subjpath = 'sub' + str(subj.subinfo['sub-'])
-        outputpath = os.path.join(outputpath, subjpath)
-        if not os.path.exists(outputpath):
-            os.mkdir(outputpath)
-
-        if subj.subinfo['ses-'] is not None:
-            sespath = 'ses' + str(subj.subinfo['ses-'])
-            outputpath = os.path.join(outputpath, sespath)
-            if not os.path.exists(outputpath):
-                os.mkdir(outputpath)
-
-        outputpath = os.path.join(outputpath, 'nirs')
-        if not os.path.exists(outputpath):
-            os.mkdir(outputpath)
-    else:
-        return ValueError('Invalid directory to build BIDS folder.')
-
-    run.directory_export(outputpath)
-
-    # re-create source snirf file
-    snirfoutput = os.path.join(outputpath, os.path.basename(inputpath))
-    if not os.path.isfile(snirfoutput):
-        run.SNIRF.save(snirfoutput)
-
-    # This will probably work only with a single SNIRF file for now
-    fname = outputpath + '/participants.tsv'
-    with open(fname, 'w', newline='') as f:
-        writer = csv.DictWriter(f, fieldnames=list(run.participants.keys()), delimiter="\t", quotechar='"')
-        writer.writeheader()
-        writer.writerow(run.participants)
-
-    # scans.tsv output, same thing as participants for scans
-    fname = outputpath + '/scans.tsv'
-    with open(fname, 'w', newline='') as f:
-        writer = csv.DictWriter(f, fieldnames=list(run.scans.keys()), delimiter="\t", quotechar='"')
-        writer.writeheader()
-        writer.writerow(run.scans)
-
-    return run.json_export()
-
+    run = SnirfRun(fpath=path_to_snirf)
+    s = SnirfRun(fpath=path_to_snirf).export_to_dict()
+    if outputpath is None:
+        outputpath = os.path.join(os.path.split(path_to_snirf)[0])  # If no output location provided, put files next to input SNIRF
+    for item in list(s.keys()):
+        if item.endswith('.json'):
+            with open(os.path.join(outputpath, item), 'w') as f:
+                f.write(s[item])
+        elif item.endswith('.tsv'):
+            with open(os.path.join(outputpath, item), 'w') as f:
+                f.write(s[item])
 
 def snirf2json(path_to_snirf: str) -> str:
     run = SnirfRun(fpath=path_to_snirf)
-    return run.json_export()
-
+    return json.dump(run.export_to_dict())
