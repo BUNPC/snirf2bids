@@ -741,8 +741,9 @@ class Optodes(TSV):
                                                     s.nirs[0].probe.detectorPos3D[:, 0])
                 self._fields['y'].value = np.append(s.nirs[0].probe.sourcePos3D[:, 1],
                                                     s.nirs[0].probe.detectorPos3D[:, 1])
-                self._fields['z'].value = np.append(s.nirs[0].probe.sourcePos3D[:, 2],
-                                                    s.nirs[0].probe.detectorPos3D[:, 2])
+                if np.max(np.append(s.nirs[0].probe.sourcePos3D[:, 2], s.nirs[0].probe.detectorPos3D[:, 2])) > 0:
+                    self._fields['z'].value = np.append(s.nirs[0].probe.sourcePos3D[:, 2],
+                                                        s.nirs[0].probe.detectorPos3D[:, 2])
             elif s.nirs[0].probe.detectorPos2D is not None and s.nirs[0].probe.sourcePos2D is not None:
                 self._fields['x'].value = np.append(s.nirs[0].probe.sourcePos2D[:, 0],
                                                     s.nirs[0].probe.detectorPos2D[:, 0])
