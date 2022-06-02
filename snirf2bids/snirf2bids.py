@@ -10,7 +10,7 @@ from warnings import warn
 
 import numpy as np
 from importlib_resources import files
-from pysnirf2 import Snirf
+from pysnirf2 import Snirf, SnirfFormatError
 
 try:
     from snirf2bids.__version__ import __version__ as __version__
@@ -733,21 +733,23 @@ class Optodes(TSV):
             src_n = len(src_labels)
             det_n = len(det_labels)
             self._fields['name'].value = np.append(src_labels,
-                                                   src_labels)
+                                                   det_labels)
             self._fields['type'].value = np.append(['source'] * src_n,
                                                    ['detector'] * det_n)
-            if s.nirs[0].probe.detectorPos2D is None and s.nirs[0].probe.sourcePos2D is None:
+            if s.nirs[0].probe.detectorPos3D is not None and s.nirs[0].probe.sourcePos3D is not None:
                 self._fields['x'].value = np.append(s.nirs[0].probe.sourcePos3D[:, 0],
                                                     s.nirs[0].probe.detectorPos3D[:, 0])
                 self._fields['y'].value = np.append(s.nirs[0].probe.sourcePos3D[:, 1],
                                                     s.nirs[0].probe.detectorPos3D[:, 1])
                 self._fields['z'].value = np.append(s.nirs[0].probe.sourcePos3D[:, 2],
                                                     s.nirs[0].probe.detectorPos3D[:, 2])
-            elif s.nirs[0].probe.detectorPos3D is None and s.nirs[0].probe.sourcePos3D is None:
+            elif s.nirs[0].probe.detectorPos2D is not None and s.nirs[0].probe.sourcePos2D is not None:
                 self._fields['x'].value = np.append(s.nirs[0].probe.sourcePos2D[:, 0],
                                                     s.nirs[0].probe.detectorPos2D[:, 0])
                 self._fields['y'].value = np.append(s.nirs[0].probe.sourcePos2D[:, 1],
                                                     s.nirs[0].probe.detectorPos2D[:, 1])
+            else:
+                raise SnirfFormatError('Cannot import optodes information from ' + fpath + '!')
 
 
 class Channels(TSV):
