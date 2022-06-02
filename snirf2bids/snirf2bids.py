@@ -159,7 +159,7 @@ def _pull_scans(entities, field, fpath=None):
         if field == 'filename':
             return 'nirs/' + _make_filename_prefix(entities) + '.snirf'
         elif field == 'acq_time':
-            with Snirf(fpath) as s:
+            with Snirf(fpath, 'r') as s:
                 date = s.nirs[0].metaDataTags.MeasurementDate
                 time = s.nirs[0].metaDataTags.MeasurementTime
                 hour_minute_second = time[:8]
@@ -695,7 +695,7 @@ class Coordsystem(JSON):
         """
 
         self._source_snirf = fpath
-        with Snirf(fpath) as s:
+        with Snirf(fpath, 'r') as s:
             self._fields['NIRSCoordinateUnits'].value = s.nirs[0].metaDataTags.LengthUnit
 
 
@@ -727,7 +727,7 @@ class Optodes(TSV):
 
         self._source_snirf = fpath
 
-        with Snirf(fpath) as s:
+        with Snirf(fpath, 'r') as s:
             src_labels = _get_source_labels(s)
             det_labels = _get_detector_labels(s)
             src_n = len(src_labels)
@@ -777,7 +777,7 @@ class Channels(TSV):
         """
         self._source_snirf = fpath
 
-        with Snirf(fpath) as s:
+        with Snirf(fpath, 'r') as s:
             src_labels = _get_source_labels(s)
             det_labels = _get_detector_labels(s)
             wavelength = s.nirs[0].probe.wavelengths
@@ -865,7 +865,7 @@ class Events(TSV):
         self._source_snirf = fpath
         temp = None
 
-        with Snirf(fpath) as s:
+        with Snirf(fpath, 'r') as s:
             for nirs in s.nirs:
                 for stim in nirs.stim:
                     if stim.data.ndim > 1 and np.shape(stim.data)[1] > 2:
@@ -913,7 +913,7 @@ class Sidecar(JSON):
 
         self._source_snirf = fpath
 
-        with Snirf(fpath) as s:
+        with Snirf(fpath, 'r') as s:
             self._fields['SamplingFrequency'].value = np.mean(np.diff(np.array(s.nirs[0].data[0].time)))
             self._fields['NIRSChannelCount'].value = len(s.nirs[0].data[0].measurementList)
             self._fields['TaskName'].value = _pull_entity_value(fpath, 'task')
@@ -943,7 +943,9 @@ class SnirfRun(object):
 
     def __init__(self, fpath=None):
         """Constructor for the `Run` class"""
-        self.SNIRF = Snirf(fpath)
+        
+        # Need to ensure we are opening an existing file
+        assert os.path.exists(fpath), 'No such SNIRF file: ' + fpath
 
         self.coordsystem = Coordsystem(fpath=fpath)
         self.optodes = Optodes(fpath=fpath)
@@ -1064,7 +1066,7 @@ class SnirfRun(object):
         self.events.export_sidecar(self.entities, fpath)
 
     def export_to_dict(self):
-        export = dict(self.entities)  # This is a deep copy. We want to return the entities we parsed to the client
+        export = {}  # This is a deep copy. We want to return the entities we parsed to the client
         fnames = self.pull_fnames()
 
         # coordsystem.json
