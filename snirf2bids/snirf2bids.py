@@ -596,7 +596,7 @@ class TSV(Metadata):
 
         # TSV FILE WRITING
         with open(filedir, 'w', newline='') as tsvfile:
-            writer = csv.writer(tsvfile, delimiter='\t', newline='\n')  # writer setup in tsv format
+            writer = csv.writer(tsvfile, delimiter='\t', newline='')  # writer setup in tsv format
             writer.writerow(fieldnames)  # write fieldnames
             writer.writerows(valfiltered)  # write rows
 

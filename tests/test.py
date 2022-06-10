@@ -37,6 +37,9 @@ class snirf2bids_Test(unittest.TestCase):
                         print(json.dumps(json.loads(s[fname]), indent=2))
                     elif fname.endswith('.tsv'):
                         rows = csv.reader(io.StringIO(s[fname]), delimiter='\t')
+                        print('UTF-8:')
+                        print(s[fname].encode('utf-8'))
+                        print('Formatted:')
                         print(tabulate.tabulate(rows))
                 print('__________________________________________________')
 
