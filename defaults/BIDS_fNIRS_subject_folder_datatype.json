@@ -1,5 +1,5 @@
 {"_nirs.json":
-  {"RequirementLevel": "String",
+  {
     "TaskName": "String",
     "SamplingFrequency": "Number",
     "NIRSChannelCount": "Number",
@@ -29,7 +29,7 @@
     "GYROChannelCount": "Number",
     "MAGNChannelCount": "Number"},
   "_events.tsv":
-  {"RequirementLevel": "String",
+  {
     "onset": "Number",
     "duration": "Number",
     "StimulusPresentation": "String",
@@ -45,7 +45,7 @@
     "HED": "String",
     "stim_file": "String"},
   "_channels.tsv":
-  {"RequirementLevel": "String",
+  {
     "name": "String",
     "type": "String",
     "source": "String",
@@ -61,7 +61,7 @@
     "status": "String",
     "status_description": "String"},
   "_optodes.tsv":
-  {"RequirementLevel": "String",
+  {
     "name": "String",
     "type": "String",
     "x": "Number",
@@ -74,7 +74,7 @@
     "detector_type": "String",
     "source_type": "String"},
   "_coordsystem.json":
-  {"RequirementLevel": "String",
+  {
     "NIRSCoordinateSystem": "String",
     "NIRSCoordinateUnits": "String",
     "NIRSCoordinateSystemDescription": "String",

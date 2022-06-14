@@ -1,5 +1,5 @@
 {"dataset_description.json":
-  {"RequirementLevel": "REQUIRED",
+  {
     "Name": "REQUIRED",
     "BIDSVersion": "REQUIRED",
     "HEDVersion": "RECOMMENDED",
@@ -13,8 +13,8 @@
     "ReferencesAndLinks": "OPTIONAL",
     "DatasetDOI": "OPTIONAL"},
   "participants.tsv":
-  {"RequirementLevel": "RECOMMENDED"},
-  "README": {"RequirementLevel": "OPTIONAL"},
-  "CHANGES": {"RequirementLevel": "OPTIONAL"},
-  "LICENSE": {"RequirementLevel": "OPTIONAL"}
+  {},
+  "README": {},
+  "CHANGES": {},
+  "LICENSE": {}
 }
