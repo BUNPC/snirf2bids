@@ -437,7 +437,7 @@ class Metadata:
 
         default_list = None
         default_type = None
-        if "sidecar" in self.get_class_name().lower():
+        if isinstance(self, Sidecar):
             default_list = _get_requirement_levels("*_nirs.json")
             default_type = _get_datatypes("*_nirs.json")
         elif isinstance(self, JSON):
@@ -641,8 +641,8 @@ class TSV(Metadata):
             json.dump(self._sidecar, file, indent=4)
 
     def get_all_fields(self):
-        fields = list(self._fields)[1:]
-        values = list(self._fields.values())[1:]
+        fields = list(self._fields)
+        values = list(self._fields.values())
         entries_by_col = [values[i].value for i in range(len(values))]
         
         mask = [val is not None for val in entries_by_col]
