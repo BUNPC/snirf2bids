@@ -1,0 +1,409 @@
+{
+    "*_nirs.json": {
+        "TaskName": {
+            "__Type__": "String",
+            "__RequirementLevel__": "REQUIRED"
+        },
+        "SamplingFrequency": {
+            "__Type__": "Number",
+            "__RequirementLevel__": "REQUIRED"
+        },
+        "NIRSChannelCount": {
+            "__Type__": "Number",
+            "__RequirementLevel__": "REQUIRED"
+        },
+        "NIRSSourceOptodeCount": {
+            "__Type__": "Number",
+            "__RequirementLevel__": "REQUIRED"
+        },
+        "NIRSDetectorOptodeCount": {
+            "__Type__": "Number",
+            "__RequirementLevel__": "REQUIRED"
+        },
+        "InstitutionName": {
+            "__Type__": "String",
+            "__RequirementLevel__": "RECOMMENDED"
+        },
+        "InstitutionAddress": {
+            "__Type__": "String",
+            "__RequirementLevel__": "RECOMMENDED"
+        },
+        "Manufacturer": {
+            "__Type__": "String",
+            "__RequirementLevel__": "RECOMMENDED"
+        },
+        "ManufacturersModelName": {
+            "__Type__": "String",
+            "__RequirementLevel__": "RECOMMENDED"
+        },
+        "SoftwareVersions": {
+            "__Type__": "String",
+            "__RequirementLevel__": "RECOMMENDED"
+        },
+        "TaskDescription": {
+            "__Type__": "String",
+            "__RequirementLevel__": "RECOMMENDED"
+        },
+        "Instructions": {
+            "__Type__": "String",
+            "__RequirementLevel__": "RECOMMENDED"
+        },
+        "CogAtlasID": {
+            "__Type__": "String",
+            "__RequirementLevel__": "RECOMMENDED"
+        },
+        "CogPOID": {
+            "__Type__": "String",
+            "__RequirementLevel__": "RECOMMENDED"
+        },
+        "DeviceSerialNumber": {
+            "__Type__": "String",
+            "__RequirementLevel__": "RECOMMENDED"
+        },
+        "RecordingDuration": {
+            "__Type__": "Number",
+            "__RequirementLevel__": "RECOMMENDED"
+        },
+        "HeadCircumference": {
+            "__Type__": "Number",
+            "__RequirementLevel__": "RECOMMENDED"
+        },
+        "HardwareFilters": {
+            "__Type__": "String",
+            "__RequirementLevel__": "RECOMMENDED"
+        },
+        "SubjectArtefactDescription": {
+            "__Type__": "String",
+            "__RequirementLevel__": "RECOMMENDED"
+        },
+        "CapManufacturer": {
+            "__Type__": "String",
+            "__RequirementLevel__": "RECOMMENDED"
+        },
+        "CapManufacturersModelName": {
+            "__Type__": "String",
+            "__RequirementLevel__": "RECOMMENDED"
+        },
+        "SourceType": {
+            "__Type__": "String",
+            "__RequirementLevel__": "RECOMMENDED"
+        },
+        "DetectorType": {
+            "__Type__": "String",
+            "__RequirementLevel__": "RECOMMENDED"
+        },
+        "ShortChannelCount": {
+            "__Type__": "Number",
+            "__RequirementLevel__": "RECOMMENDED"
+        },
+        "NIRSPlacementScheme": {
+            "__Type__": "String",
+            "__RequirementLevel__": "RECOMMENDED"
+        },
+        "ACCELChannelCount": {
+            "__Type__": "Number",
+            "__RequirementLevel__": "CONDITIONAL"
+        },
+        "GYROChannelCount": {
+            "__Type__": "Number",
+            "__RequirementLevel__": "CONDITIONAL"
+        },
+        "MAGNChannelCount": {
+            "__Type__": "Number",
+            "__RequirementLevel__": "CONDITIONAL"
+        },
+        "__RequirementLevel__": "REQUIRED"
+    },
+    "*_events.tsv": {
+        "onset": {
+            "__Type__": "Number",
+            "__RequirementLevel__": "REQUIRED",
+            "__Description__": "Onset (in seconds) of the event, measured from the beginning of the acquisition of the first data point stored in the corresponding task data file. Negative onsets are allowed, to account for events that occur prior to the first stored data point. For example, in case there is an in-scanner training phase that begins before the scanning sequence has started events from this sequence should have negative onset time counting down to the beginning of the acquisition of the first volume.\nIf any data points have been discarded before forming the data file (for example, 'dummy volumes' in BOLD fMRI), a time of 0 corresponds to the first stored data point and not the first acquired data point."
+        },
+        "duration": {
+            "__Type__": "Number",
+            "__RequirementLevel__": "REQUIRED",
+            "__Description__": "Duration of the event (measured from onset) in seconds. Must always be either zero or positive (or n/a if unavailable). A 'duration' value of zero implies that the delta function or event is so short as to be effectively modeled as an impulse."
+        },
+        "StimulusPresentation": {
+            "__Type__": "String",
+            "__RequirementLevel__": "RECOMMENDED",
+            "__Description__": "Object containing key value pairs related to the software used to present the stimuli during the experiment, specifically: 'OperatingSystem', 'SoftwareName', 'SoftwareRRID', 'SoftwareVersion' and 'Code'. See table below for more information."
+        },
+        "OperatingSystem": {
+            "__Type__": "String",
+            "__RequirementLevel__": "RECOMMENDED",
+            "__Description__": "Operating system used to run the stimuli presentation software (for formatting recommendations, see examples below this table)."
+        },
+        "SoftwareName": {
+            "__Type__": "String",
+            "__RequirementLevel__": "RECOMMENDED",
+            "__Description__": "Name of the software that was used to present the stimuli."
+        },
+        "SoftwareRRID": {
+            "__Type__": "String",
+            "__RequirementLevel__": "RECOMMENDED",
+            "__Description__": "Research Resource Identifier of the software that was used to present the stimuli. Examples: The RRID for Psychtoolbox is 'SCR_002881', and that of PsychoPy is 'SCR_006571'."
+        },
+        "SoftwareVersion": {
+            "__Type__": "String",
+            "__RequirementLevel__": "RECOMMENDED",
+            "__Description__": "Version of the software that was used to present the stimuli."
+        },
+        "Code": {
+            "__Type__": "String",
+            "__RequirementLevel__": "RECOMMENDED",
+            "__Description__": "URI of the code used to present the stimuli. Persistent identifiers such as DOIs are preferred. If multiple versions of code may be hosted at the same location, revision-specific URIs are recommended."
+        },
+        "sample": {
+            "__Type__": "String",
+            "__RequirementLevel__": "OPTIONAL",
+            "__Description__": "Onset of the event according to the sampling scheme of the recorded modality (that is, referring to the raw data file that the events.tsv file accompanies)."
+        },
+        "trial_type": {
+            "__Type__": "String",
+            "__RequirementLevel__": "OPTIONAL",
+            "__Description__": "Primary categorisation of each trial to identify them as instances of the experimental conditions. For example: for a response inhibition task, it could take on values go and no-go to refer to response initiation and response inhibition experimental conditions."
+        },
+        "response_time": {
+            "__Type__": "Number",
+            "__RequirementLevel__": "OPTIONAL",
+            "__Description__": "Response time measured in seconds. A negative response time can be used to represent preemptive responses and n/a denotes a missed response."
+        },
+        "value": {
+            "__Type__": "Number",
+            "__RequirementLevel__": "OPTIONAL",
+            "__Description__": "Marker value associated with the event (for example, the value of a TTL trigger that was recorded at the onset of the event)."
+        },
+        "HED": {
+            "__Type__": "String",
+            "__RequirementLevel__": "OPTIONAL",
+            "__Description__": "Hierarchical Event Descriptor (HED) Tag. See Appendix III for details."
+        },
+        "stim_file": {
+            "__Type__": "String",
+            "__RequirementLevel__": "OPTIONAL",
+            "__Description__": "Represents the location of the stimulus file (such as an image, video, or audio file) presented at the given onset time. There are no restrictions on the file formats of the stimuli files, but they should be stored in the /stimuli folder (under the root folder of the dataset; with optional subfolders). The values under the stim_file column correspond to a path relative to /stimuli. For example images/cat03.jpg will be translated to /stimuli/images/cat03.jpg."
+        },
+        "__RequirementLevel__": "REQUIRED"
+    },
+    "*_channels.tsv": {
+        "name": {
+            "__Type__": "String",
+            "__RequirementLevel__": "REQUIRED",
+            "__Description__": "Label of the channel."
+        },
+        "type": {
+            "__Type__": "String",
+            "__RequirementLevel__": "REQUIRED",
+            "__Description__": "Type of channel; MUST use the channel types listed below. Note that the type MUST be in upper-case. See the table below for further details on the fNIRS specific types.Must be one of: \n\n'MEGMAG', 'MEGGRADAXIAL', 'MEGGRADPLANAR', 'MEGREFMAG', 'MEGREFGRADAXIAL', 'MEGREFGRADPLANAR', 'MEGOTHER', 'EEG', 'ECOG', 'SEEG', 'DBS', 'VEOG', 'HEOG', 'EOG', 'ECG', 'EMG', 'TRIG', 'AUDIO', 'PD', 'EYEGAZE', 'PUPIL', 'MISC', 'SYSCLOCK', 'ADC', 'DAC', 'HLU', 'FITERR', 'NIRSCWAMPLITUDE', 'NIRSCWFLUORESCENSEAMPLITUDE', 'NIRSCWOPTICALDENSITY', 'NIRSCWHBO', 'NIRSCWHBR', 'NIRSCWMUA', 'ACCEL', 'GYRO', 'MAGN', 'MISC', 'OTHER'."
+        },
+        "source": {
+            "__Type__": "String",
+            "__RequirementLevel__": "REQUIRED",
+            "__Description__": "Name of the source as specified in the *_optodes.tsv file. n/a for channels that do not contain fNIRS signals (for example, acceleration)."
+        },
+        "detector": {
+            "__Type__": "String",
+            "__RequirementLevel__": "REQUIRED",
+            "__Description__": "Name of the detector as specified in the *_optodes.tsv file. n/a for channels that do not contain fNIRS signals (for example, acceleration)."
+        },
+        "wavelength_nominal": {
+            "__Type__": "Number",
+            "__RequirementLevel__": "REQUIRED",
+            "__Description__": "Specified wavelength of light in nm. n/a for channels that do not contain raw fNIRS signals (acceleration). This field is equivalent to /nirs(i)/probe/wavelengths in the SNIRF specification."
+        },
+        "units": {
+            "__Type__": "String",
+            "__RequirementLevel__": "REQUIRED",
+            "__Description__": "Physical unit of the value represented in this channel, specified according to the SI unit symbol and possibly prefix symbol, or as a derived SI unit (for example, V, or unitless for changes in optical densities). For guidelines about units see the Appendix and Common Principles pages."
+        },
+        "sampling_frequency": {
+            "__Type__": "Number",
+            "__RequirementLevel__": "CONDITIONAL"
+        },
+        "orientation_component": {
+            "__Type__": "String",
+            "__RequirementLevel__": "CONDITIONAL",
+            "__Description__": "Description of the orientation of the ACCEL, GYRO, MAGN type. Either x, y, or z."
+        },
+        "wavelength_actual": {
+            "__Type__": "Number",
+            "__RequirementLevel__": "OPTIONAL",
+            "__Description__": "Measured wavelength of light in nm. n/a for channels that do not contain raw NIRS signals (acceleration). This field is equivalent to measurementList.wavelengthActual in the SNIRF specification."
+        },
+        "description": {
+            "__Type__": "String",
+            "__RequirementLevel__": "OPTIONAL",
+            "__Description__": "Brief free-text description of the channel, or other information of interest."
+        },
+        "wavelength_emission_actual": {
+            "__Type__": "Number",
+            "__RequirementLevel__": "OPTIONAL",
+            "__Description__": "Measured emission wavelength of light in nm. n/a for channels that do not contain raw NIRS signals (acceleration). This field is equivalent to measurementList.wavelengthEmissionActual in the SNIRF specification."
+        },
+        "short_channel": {
+            "__Type__": "Number",
+            "__RequirementLevel__": "OPTIONAL",
+            "__Description__": "Is the channel designated as short. The total number of channels listed as short channels should be stored in ShortChannelCount in *_fnirs.csv.\n\nMust be one of: 'true', 'false'."
+        },
+        "status": {
+            "__Type__": "String",
+            "__RequirementLevel__": "OPTIONAL",
+            "__Description__": "Data quality observed on the channel. A channel is considered bad if its data quality is compromised by excessive noise. If quality is unknown, then a value of n/a may be used. Description of noise type SHOULD be provided in [status_description].\n\nMust be one of: 'good', 'bad', 'n/a'."
+        },
+        "status_description": {
+            "__Type__": "String",
+            "__RequirementLevel__": "OPTIONAL",
+            "__Description__": "Freeform text description of noise or artifact affecting data quality on the channel. It is meant to explain why the channel was declared bad in [status]."
+        },
+        "__RequirementLevel__": "REQUIRED"
+    },
+    "*_optodes.tsv": {
+        "name": {
+            "__Type__": "String",
+            "__RequirementLevel__": "REQUIRED",
+            "__Description__": "Name of the optode, must be unique."
+        },
+        "type": {
+            "__Type__": "String",
+            "__RequirementLevel__": "REQUIRED",
+            "__Description__": "Either source or detector."
+        },
+        "x": {
+            "__Type__": "Number",
+            "__RequirementLevel__": "REQUIRED",
+            "__Description__": "Recorded position along the x-axis. 'n/a' if not available."
+        },
+        "y": {
+            "__Type__": "Number",
+            "__RequirementLevel__": "REQUIRED",
+            "__Description__": "Recorded position along the y-axis. 'n/a' if not available."
+        },
+        "z": {
+            "__Type__": "Number",
+            "__RequirementLevel__": "REQUIRED",
+            "__Description__": "Recorded position along the z-axis. 'n/a' if not available."
+        },
+        "template_x": {
+            "__Type__": "Number",
+            "__RequirementLevel__": "CONDITIONAL",
+            "__Description__": "Assumed or ideal position along the x axis."
+        },
+        "template_y": {
+            "__Type__": "Number",
+            "__RequirementLevel__": "CONDITIONAL",
+            "__Description__": "Assumed or ideal position along the y axis."
+        },
+        "template_z": {
+            "__Type__": "Number",
+            "__RequirementLevel__": "CONDITIONAL",
+            "__Description__": "Assumed or ideal position along the z axis."
+        },
+        "description": {
+            "__Type__": "String",
+            "__RequirementLevel__": "OPTIONAL",
+            "__Description__": "Free-form text description of the optode, or other information of interest."
+        },
+        "detector_type": {
+            "__Type__": "String",
+            "__RequirementLevel__": "OPTIONAL",
+            "__Description__": "The type of detector. Only to be used if the field DetectorType in *_nirs.json is set to mixed."
+        },
+        "source_type": {
+            "__Type__": "String",
+            "__RequirementLevel__": "OPTIONAL",
+            "__Description__": "The type of source. Only to be used if the field SourceType in *_nirs.json is set to mixed."
+        },
+        "__RequirementLevel__": "OPTIONAL"
+    },
+    "*_coordsystem.json": {
+        "NIRSCoordinateSystem": {
+            "__Type__": "String",
+            "__RequirementLevel__": "REQUIRED"
+        },
+        "NIRSCoordinateUnits": {
+            "__Type__": "String",
+            "__RequirementLevel__": "REQUIRED"
+        },
+        "NIRSCoordinateSystemDescription": {
+            "__Type__": "String",
+            "__RequirementLevel__": "CONDITIONAL"
+        },
+        "NIRSCoordinateProcessingDescription": {
+            "__Type__": "String",
+            "__RequirementLevel__": "RECOMMENDED"
+        },
+        "FiducialsCoordinates": {
+            "__Type__": "String",
+            "__RequirementLevel__": "RECOMMENDED"
+        },
+        "FiducialsCoordinateSystem": {
+            "__Type__": "String",
+            "__RequirementLevel__": "RECOMMENDED"
+        },
+        "FiducialsCoordinateUnits": {
+            "__Type__": "String",
+            "__RequirementLevel__": "RECOMMENDED"
+        },
+        "AnatomicalLandmarkCoordinates": {
+            "__Type__": "String",
+            "__RequirementLevel__": "RECOMMENDED"
+        },
+        "AnatomicalLandmarkCoordinateSystem": {
+            "__Type__": "String",
+            "__RequirementLevel__": "RECOMMENDED"
+        },
+        "AnatomicalLandmarkCoordinateUnits": {
+            "__Type__": "String",
+            "__RequirementLevel__": "RECOMMENDED"
+        },
+        "FiducialsCoordinateSystemDescription": {
+            "__Type__": "String",
+            "__RequirementLevel__": "CONDITIONAL"
+        },
+        "AnatomicalLandmarkCoordinateSystemDescription": {
+            "__Type__": "String",
+            "__RequirementLevel__": "CONDITIONAL"
+        },
+        "FiducialsDescription": {
+            "__Type__": "String",
+            "__RequirementLevel__": "OPTIONAL"
+        },
+        "__RequirementLevel__": "CONDITIONAL"
+    },
+    "*_nirs.snirf": {
+        "__RequirementLevel__": "REQUIRED"
+    },
+    "*participants.tsv": {
+        "participant_id": {
+            "__Description__": "A participant identifier of the form sub-<label>, matching a participant entity found in the dataset. There MUST be exactly one row for each participant."
+        },
+        "species": {
+            "__Description__": "The species column SHOULD be a binomial species name from the NCBI Taxonomy (for example, homo sapiens, mus musculus, rattus norvegicus). For backwards compatibility, if species is absent, the participant is assumed to be homo sapiens."
+        },
+        "age": {
+            "__Description__": "Numeric value in years (float or integer value)."
+        },
+        "sex": {
+            "__Description__": "String value indicating phenotypical sex, one of 'male', 'female', 'other'.\nFor 'male', use one of these values: male, m, M, MALE, Male.\nFor 'female', use one of these values: female, f, F, FEMALE, Female.\nFor 'other', use one of these values: other, o, O, OTHER, Other.\n\nMust be one of: 'male', 'm', 'M', 'MALE', 'Male', 'female', 'f', 'F', 'FEMALE', 'Female', 'other', 'o', 'O', 'OTHER', 'Other', 'n/a'."
+        },
+        "handedness": {
+            "__Description__": "String value indicating one of 'left', 'right', 'ambidextrous'.\nFor 'left', use one of these values: left, l, L, LEFT, Left.\nFor 'right', use one of these values: right, r, R, RIGHT, Right.\nFor 'ambidextrous', use one of these values: ambidextrous, a, A, AMBIDEXTROUS, Ambidextrous.\n\nMust be one of: 'left', 'l', 'L', 'LEFT', 'Left', 'right', 'r', 'R', 'RIGHT', 'Right', 'ambidextrous', 'a', 'A', 'AMBIDEXTROUS', 'Ambidextrous', 'n/a'."
+        },
+        "strain": {
+            "__Description__": "For species different from homo sapiens, string value indicating the strain of the species, for example: C57BL/6J."
+        },
+        "strain_rrid": {
+            "__Description__": "For species different from homo sapiens, research resource identifier (RRID) of the strain of the species, for example: RRID:IMSR_JAX:000664."
+        }
+    },
+    "*scans.tsv": {
+        "filename": {
+            "__Description__": "Relative paths to files. There MUST be exactly one row for each file.\n"
+        },
+        "acq_time": {
+            "__Description__": "Acquisition time refers to when the first data point in each run was acquired. Furthermore, if this header is provided, the acquisition times of all files from the same recording MUST be identical. Datetime format and their anonymization are described in Units."
+        }
+    }
+}
