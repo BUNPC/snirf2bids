@@ -581,7 +581,7 @@ class TSV(Metadata):
         super().__init__()
         self._sidecar = None
 
-    def save_to_tsv(self, info, fpath):
+    def save_to_tsv(self, info, fpath, header=True):
         """Save a TSV inherited class into an output TSV file with a BIDS-compliant name in the file directory
         designated by the user
 
@@ -601,7 +601,8 @@ class TSV(Metadata):
         # TSV FILE WRITING
         with open(filedir, 'w', newline='') as tsvfile:
             writer = csv.writer(tsvfile, delimiter='\t', newline='')  # writer setup in tsv format
-            writer.writerow(fieldnames)  # write fieldnames
+            if header:
+                writer.writerow(fieldnames)  # write fieldnames
             writer.writerows(valfiltered)  # write rows
 
     def load_from_tsv(self, fpath):
@@ -651,7 +652,7 @@ class TSV(Metadata):
         with open(filedir, 'w') as file:
             json.dump(self._sidecar, file, indent=4)
 
-    def get_all_fields(self):
+    def get_all_fields(self, header=True):
         fields = list(self._fields)
         values = list(self._fields.values())
         entries_by_col = [values[i].value for i in range(len(values))]
@@ -665,7 +666,8 @@ class TSV(Metadata):
         if len(headers) > 0:
             formatted = io.StringIO('wb', newline='')
             writer = csv.writer(formatted, delimiter='\t')
-            writer.writerow(headers)
+            if header:
+                writer.writerow(headers)
             for i in range(len(columns[0])):  # For each row
                 writer.writerow([str(col[i]) for col in columns])
 
@@ -776,11 +778,12 @@ class Channels(TSV):
         else:
             super().__init__()
 
-    def load_from_SNIRF(self, fpath):
+    def load_from_SNIRF(self, fpath, load_aux=False):
         """Creates the channels class based on information from a reference SNIRF file
 
             Args:
                 fpath: The file path to the reference SNIRF file
+                load_aux: Optional. If True, aux channels are added to the *_channels.tsv file. Default False.
         """
         self._source_snirf = fpath
 
@@ -812,7 +815,7 @@ class Channels(TSV):
                 detector_list.append(det_labels[detector_index - 1])
                 wavelength_nominal[i] = wavelength[wavelength_index - 1]
 
-            if len(s.nirs[0].aux) > 0:
+            if load_aux and len(s.nirs[0].aux) > 0:
                 append_nominal = np.empty((1, len(s.nirs[0].aux)))
                 append_nominal[:] = np.NaN
                 for j in range(len(s.nirs[0].aux)):
