@@ -1,20 +1,33 @@
-{"dataset_description.json":
-  {"RequirementLevel": "REQUIRED",
-    "Name": "REQUIRED",
-    "BIDSVersion": "REQUIRED",
-    "HEDVersion": "RECOMMENDED",
-    "DatasetType": "RECOMMENDED",
-    "License": "RECOMMENDED",
-    "Authors": "OPTIONAL",
-    "Acknowledgements": "OPTIONAL",
-    "HowToAcknowledge": "OPTIONAL",
-    "Funding": "OPTIONAL",
-    "EthicsApprovals": "OPTIONAL",
-    "ReferencesAndLinks": "OPTIONAL",
-    "DatasetDOI": "OPTIONAL"},
-  "participants.tsv":
-  {"RequirementLevel": "RECOMMENDED"},
-  "README": {"RequirementLevel": "OPTIONAL"},
-  "CHANGES": {"RequirementLevel": "OPTIONAL"},
-  "LICENSE": {"RequirementLevel": "OPTIONAL"}
+{
+    "dataset_description.json": {
+        "__RequirementLevel__": "REQUIRED",
+        "Name": "REQUIRED",
+        "BIDSVersion": "REQUIRED",
+        "HEDVersion": "RECOMMENDED",
+        "DatasetType": "RECOMMENDED",
+        "License": "RECOMMENDED",
+        "Authors": "OPTIONAL",
+        "Acknowledgements": "OPTIONAL",
+        "HowToAcknowledge": "OPTIONAL",
+        "Funding": "OPTIONAL",
+        "EthicsApprovals": "OPTIONAL",
+        "ReferencesAndLinks": "OPTIONAL",
+        "DatasetDOI": "OPTIONAL"
+    },
+    "participants.tsv": {
+        "__RequirementLevel__": "RECOMMENDED",
+        "participant_id": "REQUIRED",
+        "age": "RECOMMENDED",
+        "sex": "RECOMMENDED",
+        "handedness": "RECOMMENDED"
+    },
+    "README": {
+        "__RequirementLevel__": "OPTIONAL"
+    },
+    "CHANGES": {
+        "__RequirementLevel__": "OPTIONAL"
+    },
+    "LICENSE": {
+        "__RequirementLevel__": "OPTIONAL"
+    }
 }

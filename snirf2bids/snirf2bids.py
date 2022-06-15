@@ -9,7 +9,7 @@ import os
 from warnings import warn
 
 import numpy as np
-from importlib_resources import files
+import importlib_resources
 from pysnirf2 import Snirf, SnirfFormatError
 
 try:
@@ -18,33 +18,32 @@ except Exception:
     warn('Failed to load snirf2bids library version')
     __version__ = '0.0.0'
 
+try:
+    with open(importlib_resources.files("schema") / 'schema.json') as f:
+        __SCHEMA__ = json.load(f)
+    with open(importlib_resources.files("schema") / 'measurement_types.json') as f:
+        __CHANNEL_TYPES__= json.load(f)
+except Exception as e:
+    raise ImportError('Could not import snirf2bids. Failed to load BIDS schema from ' + str(importlib_resources.files("schema") / 'schema.json'))
 
-def _getdefault(fpath, key):
-    """Get the fields/keys and corresponding values/descriptions from a JSON file.
 
-        Args:
-            fpath: The filepath to the JSON file containing the list of default fields (in string)
-            key: The specific Metadata file extension such as _nirs.json, _optodes.tsv, etc. or specific key/field
-                 declared within the dictionary in the JSON file.
+def _get_channel_type(key: str):
+    try:
+        return str(__CHANNEL_TYPES__[str(key)])
+    except KeyError:
+        return "MISC"
 
-        Returns:
-            The dictionary stored within the specific key/field.
-            Example output for _coordsystem.json from BIDS_fNIRS_subject_folder.JSON:
-                {'RequirementLevel': 'CONDITIONAL',
-                 'NIRSCoordinateSystem': 'REQUIRED',
-                 'NIRSCoordinateUnits': 'REQUIRED',
-                 'NIRSCoordinateSystemDescription': 'CONDITIONAL',
-                 'NIRSCoordinateProcessingDescription': 'RECOMMENDED',
-                 ...
-                 'FiducialsDescription': 'OPTIONAL'}
-    """
-    filepaths = files("defaults")
-    file = open(filepaths / fpath)
-    fields = json.load(file)
-    
-    file.close()
-        
-    return fields[key]
+
+def _get_requirement_levels(key: str):
+    return {key: value["__RequirementLevel__"] for (key, value) in __SCHEMA__[key].items() if type(value) is dict and "__RequirementLevel__" in value}
+
+
+def _get_datatypes(key: str):
+    return {key: value["__Type__"] for (key, value) in __SCHEMA__[key].items() if type(value) is dict and "__Type__" in value}
+
+
+def _get_descriptions(key: str):
+    return {key: value["__Description__"] for (key, value) in __SCHEMA__[key].items() if type(value) is dict and "__Description__" in value}
 
 
 def _extract_entities_from_filename(fname: str):
@@ -438,17 +437,15 @@ class Metadata:
 
         default_list = None
         default_type = None
-        if "sidecar" in self.get_class_name().lower():
-            default_list = _getdefault('BIDS_fNIRS_subject_folder.json', "_nirs.json")
-            default_type = _getdefault('BIDS_fNIRS_subject_folder_datatype.json', "_nirs.json")
+        if isinstance(self, Sidecar):
+            default_list = _get_requirement_levels("*_nirs.json")
+            default_type = _get_datatypes("*_nirs.json")
         elif isinstance(self, JSON):
-            default_list = _getdefault('BIDS_fNIRS_subject_folder.json', "_" + self.get_class_name().lower() + ".json")
-            default_type = _getdefault('BIDS_fNIRS_subject_folder_datatype.json',
-                                       "_" + self.get_class_name().lower() + ".json")
+            default_list = _get_requirement_levels("*_" + self.get_class_name().lower() + ".json")
+            default_type = _get_datatypes("*_" + self.get_class_name().lower() + ".json")
         elif isinstance(self, TSV):
-            default_list = _getdefault('BIDS_fNIRS_subject_folder.json', "_" + self.get_class_name().lower() + ".tsv")
-            default_type = _getdefault('BIDS_fNIRS_subject_folder_datatype.json',
-                                       "_" + self.get_class_name().lower() + ".tsv")
+            default_list = _get_requirement_levels("*_" + self.get_class_name().lower() + ".tsv")
+            default_type = _get_datatypes("*_" + self.get_class_name().lower() + ".tsv")
         return default_list, default_type
 
     def get_class_name(self):
@@ -547,10 +544,6 @@ class JSON(Metadata):
         temp = {}
         fields = self._fields
         defaults = self.default_fields()[0]
-        if 'RequirementLevel' in defaults:
-            del defaults['RequirementLevel']
-        if 'RequirementLevel' in fields:
-            del fields['RequirementLevel']
         for one in fields:
             value = getattr(self, one)
             if value is not None:
@@ -633,7 +626,7 @@ class TSV(Metadata):
         """
         keylist = list(self.get_column_names())
         d = dict.fromkeys(keylist)
-        fields = _getdefault('BIDS_fNIRS_sidecar_files.json', self.get_class_name().lower())
+        fields = _get_descriptions('*_' + self.get_class_name().lower() + '.tsv')
         for x in keylist:
             if d[x] is None:
                 d[x] = {'Description': fields[x]}
@@ -648,8 +641,8 @@ class TSV(Metadata):
             json.dump(self._sidecar, file, indent=4)
 
     def get_all_fields(self):
-        fields = list(self._fields)[1:]
-        values = list(self._fields.values())[1:]
+        fields = list(self._fields)
+        values = list(self._fields.values())
         entries_by_col = [values[i].value for i in range(len(values))]
         
         mask = [val is not None for val in entries_by_col]
@@ -799,16 +792,10 @@ class Channels(TSV):
                             str(wavelength[wavelength_index - 1]))
 
                 if s.nirs[0].data[0].measurementList[i].dataTypeLabel is None:
-                    index = s.nirs[0].data[0].measurementList[i].dataType
+                    datatype = s.nirs[0].data[0].measurementList[i].dataType
                 else:
-                    index = s.nirs[0].data[0].measurementList[i].dataTypeLabel
-                try:
-                    temp = _getdefault('BIDS_fNIRS_measurement_type.json', str(index))
-                except TypeError:
-                    TypeError('Invalid dataTypeLabel in measurementList' + str(i))
-                except KeyError:
-                    temp = 'MISC'
-                ctype.append(temp)
+                    datatype = s.nirs[0].data[0].measurementList[i].dataTypeLabel
+                ctype.append(_get_channel_type(datatype))
 
                 source_list.append(src_labels[source_index - 1])
                 detector_list.append(det_labels[detector_index - 1])
