@@ -21,10 +21,21 @@ except Exception:
 try:
     with open(importlib_resources.files("schema") / 'schema.json') as f:
         __SCHEMA__ = json.load(f)
-    with open(importlib_resources.files("schema") / 'measurement_types.json') as f:
+    with open(importlib_resources.files("schema") / 'channel_types.json') as f:
         __CHANNEL_TYPES__= json.load(f)
+    with open(importlib_resources.files("schema") / 'time_units.json') as f:
+        __TIME_UNITS__= json.load(f)
 except Exception as e:
+    print(e)
     raise ImportError('Could not import snirf2bids. Failed to load BIDS schema from ' + str(importlib_resources.files("schema") / 'schema.json'))
+
+
+def _get_time_unit(key: str):
+    try:
+        return float(__TIME_UNITS__[str(key)])
+    except KeyError:
+        warn('TimeUnit {} not understood. Falling back to interpretation as seconds.')
+        return 1.0
 
 
 def _get_channel_type(key: str):
