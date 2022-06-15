@@ -330,6 +330,53 @@ class Number(Field):
         return self.type
 
 
+class NumberArray(Field):
+    """Subclass which encapsulates fields with multiple numerical values inside a Metadata class
+
+        Attributes:
+            _value: The value of the field
+            type: Data type of the field - in this case, it's "int"
+    """
+
+    def __init__(self, val):
+        super().__init__(np.array(val).astype(float))
+        self.type = int
+
+    @staticmethod
+    def validate(val):
+        """Datatype Validation function for Number class"""
+        if type(val) is not str or val is None:
+            return True
+
+    def get_type(self):
+        """Datatype getter for the Number class"""
+        return self.type
+
+
+class StringArray(Field):
+
+    def __init__(self, val):
+        """Generic constructor for a Number Field class inherited from the Field class
+
+            Additionally, it stores the datatype which in this case, it is integer
+        """
+        super().__init__(np.array(val).astype(object))
+        self.type = str
+
+    @staticmethod
+    def validate(val):
+        """Datatype Validation function for Number class"""
+        try:
+            for item in val:
+                if not type(item) is str:
+                    return False
+        except TypeError:
+            return False
+
+    def get_type(self):
+        return self.type
+
+
 class Metadata:
     """ Metadata File Class
 
@@ -672,6 +719,10 @@ class TSV(Metadata):
                 writer.writerow([str(col[i]) for col in columns])
 
         return headers, columns, formatted.getvalue()
+    
+    @property
+    def sidecar(self):
+        return self._sidecar
 
 
 class Coordsystem(JSON):
@@ -759,6 +810,73 @@ class Optodes(TSV):
                 raise SnirfFormatError('Cannot import optodes information from ' + fpath + '!')
 
 
+class PhysioBatch:
+    """Generates batch of Physio files based on a SNIRF file."""
+    
+    def __init__(self, fpath: str=None):
+        self._physio = []
+        if fpath is not None:
+            self.load_from_SNIRF(fpath)
+        
+    def load_from_SNIRF(self, fpath: str):
+        self._physio = []
+        with Snirf(fpath, 'r') as s:
+            n_aux = len(s.nirs[0].aux)
+        for i in range(n_aux):
+            self._physio.append(Physio(fpath, i))
+                
+    def __getitem__(self, i):
+        return self._physio[i]
+
+
+class Physio(TSV):
+    
+    def __init__(self, fpath=None, aux_index=0):
+        """Encapsulates single *_physio.tsv file.
+            Args:
+                fpath: The file path to a reference SNIRF file
+        """
+        super().__init__()
+        self._name = None
+        if fpath is not None:
+            # Sidecar is produced in overridden load_from_SNIRF
+            self.load_from_SNIRF(fpath, aux_index=aux_index)
+        
+    def load_from_SNIRF(self, fpath: str, aux_index: int = 0):
+        self._source_snirf = fpath
+        self._index = aux_index
+        with Snirf(fpath, 'r') as s:
+            name = s.nirs[0].aux[aux_index].name
+            data = s.nirs[0].aux[aux_index].dataTimeSeries
+            t = s.nirs[0].aux[aux_index].time
+            time_unit = s.nirs[0].metaDataTags.TimeUnit
+            data_unit = s.nirs[0].aux[aux_index].dataUnit
+            offset = s.nirs[0].aux[aux_index].timeOffset
+            if any([v is None for v in [name, data, t, time_unit]]):
+                raise SnirfFormatError("Cannot load *_physio.tsv from invalid AuxElement {} in {}".format(aux_index, fpath))
+        self._fields['data'] = NumberArray(data)
+        sc = {}
+        if data.ndim > 1 and np.shape(data)[1] > 1:
+            sc['Columns'] = ['{}_{}'.format(name, i) for i in range(np.shape(data)[1])]
+        else:
+            sc['Columns'] = [name]
+        sc['SamplingFrequency'] = str(1 / (np.mean(np.diff(t)) * _get_time_unit(s.nirs[0].metaDataTags.TimeUnit)))
+        if offset is None:
+            sc['StartTime'] = '0.0'  # Assume no offset if not defined in SNIRF (optional)
+        else:
+            sc['StartTime'] = str(offset * _get_time_unit(s.nirs[0].metaDataTags.TimeUnit))
+        self._sidecar = sc
+        # Compose filenames
+        entities = _extract_entities_from_filename(fpath)
+        entities['recording'] = name
+        self._filename = ''.join(['{}-{}_'.format(key, val) for (key, val) in entities.items()]) + 'physio'
+        
+    def names(self):
+        return self._filename + '.tsv', self._filename + '.json'
+        
+            
+            
+            
 class Channels(TSV):
     """Channels Metadata Class
 
@@ -918,7 +1036,7 @@ class Sidecar(JSON):
         self._source_snirf = fpath
 
         with Snirf(fpath, 'r') as s:
-            self._fields['SamplingFrequency'].value = np.mean(np.diff(np.array(s.nirs[0].data[0].time)))
+            self._fields['SamplingFrequency'].value = 1 / (np.mean(np.diff(np.array(s.nirs[0].data[0].time))) * _get_time_unit(s.nirs[0].metaDataTags.TimeUnit))
             self._fields['NIRSChannelCount'].value = len(s.nirs[0].data[0].measurementList)
             self._fields['TaskName'].value = _pull_entity_value(fpath, 'task')
             if s.nirs[0].probe.detectorPos2D is None \
@@ -945,15 +1063,16 @@ class SnirfRun(object):
 
     """
 
-    def __init__(self, fpath=None):
+    def __init__(self, fpath: str):
         """Constructor for the `Run` class"""
         
         # Need to ensure we are opening an existing file
-        assert os.path.exists(fpath), 'No such SNIRF file: ' + fpath
+        assert fpath.endswith('.snirf') and os.path.exists(fpath), 'No such SNIRF file: ' + fpath
 
         self.coordsystem = Coordsystem(fpath=fpath)
         self.optodes = Optodes(fpath=fpath)
         self.channels = Channels(fpath=fpath)
+        self.physio = PhysioBatch(fpath=fpath)
         self.sidecar = Sidecar(fpath=fpath)
         self.events = Events(fpath=fpath)
         self.entities = _extract_entities_from_filename(fpath)
@@ -1081,14 +1200,18 @@ class SnirfRun(object):
         export[fnames['optodes']] = temp
 
         sidecarname = fnames['optodes'].replace('.tsv', '.json')
-        export[sidecarname] = json.dumps(self.optodes._sidecar)
+        export[sidecarname] = json.dumps(self.optodes.sidecar)
 
         # channels.tsv + json sidecar
         fieldnames, valfiltered, temp = self.channels.get_all_fields()
         export[fnames['channels']] = temp
 
-        sidecarname = fnames['channels'].replace('.tsv', '.json')
-        export[sidecarname] = json.dumps(self.channels._sidecar)
+        # *_physio.tsv + *_physio.json batch
+        for physio in self.physio:
+            fieldnames, valfiltered, temp = physio.get_all_fields(header=False)
+            tsv_name, json_name = physio.names()
+            export[tsv_name] = temp
+            export[json_name] = json.dumps(physio.sidecar)
 
         # nirs sidecar
         export[fnames['sidecar']] = json.dumps(self.sidecar.get_all_fields())
@@ -1098,7 +1221,7 @@ class SnirfRun(object):
         export[fnames['events']] = temp
 
         sidecarname = fnames['events'].replace('.tsv', '.json')
-        export[sidecarname] = json.dumps(self.events._sidecar)
+        export[sidecarname] = json.dumps(self.events.sidecar)
 
         # participant.tsv
         fields = self.participants
