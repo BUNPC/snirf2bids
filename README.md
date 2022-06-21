@@ -11,7 +11,7 @@ Conveniently generate [BIDS files](https://bids-specification--802.org.readthedo
 snirf2bids requires Python > 3.
 
 ## Usage
-A SNIRF file with a [valid BIDS name](https://bids-specification.readthedocs.io/en/stable/02-common-principles.html#file-name-structure) can be converted into BIDS metadata text files.
+Any SNIRF file with a [valid BIDS name](https://bids-specification.readthedocs.io/en/stable/02-common-principles.html#file-name-structure) can be converted into BIDS metadata text files.
 
 For use with snirf2bids, a SNIRF file name must include at least the `sub-` and `task-` entitites and end in `_nirs.snirf`, i.e. `sub-01_task-tapping_nirs.snirf`.
 
