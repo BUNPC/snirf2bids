@@ -187,32 +187,6 @@
         },
         "__RequirementLevel__": "REQUIRED"
     },
-    "*_physio.json": {
-        "Columns": {
-            "__Type__": "String",
-            "__RequirementLevel__": "REQUIRED",
-            "__Description__": "Names of columns in file."
-        },
-        "SamplingFrequency": {
-            "__Type__": "Number",
-            "__RequirementLevel__": "REQUIRED",
-            "__Description__": "Sampling frequency (in Hz) of all the data in the recording, regardless of their type (for example, 2400)."
-        },
-        "StartTime": {
-            "__Type__": "Number",
-            "__RequirementLevel__": "REQUIRED",
-            "__Description__": "Start time in seconds in relation to the start of acquisition of the first data sample in the corresponding neural dataset (negative values are allowed)."
-        },
-        "__RequirementLevel__": "OPTIONAL"
-    },
-    "*_physio.tsv": {
-        "data": {
-            "__Type__": "Number",
-            "__RequirementLevel__": "REQUIRED",
-            "__Description__": "Physiological recordings such as cardiac and respiratory signals and other continuous measures (such as parameters of a film or audio stimuli) can be specified using two files: a gzip compressed TSV file with data (without header line) and a JSON file for storing the following metadata fields."
-        },
-        "__RequirementLevel__": "OPTIONAL"
-    },
     "*_channels.tsv": {
         "name": {
             "__Type__": "String",
