@@ -759,7 +759,8 @@ class Coordsystem(JSON):
             AnatomicalLandmarkCoordinates = {}
             if not any([v is None for v in [landmarkLabels, landmarkPos3D]]):
                 for i in range(landmarkLabels.shape[0]):
-                    AnatomicalLandmarkCoordinates[landmarkLabels[i]]= landmarkPos3D[i,0:3].tolist()
+                    pos_list = landmarkPos3D[i,0:3].tolist()
+                    AnatomicalLandmarkCoordinates[landmarkLabels[i]]= '[{}]'.format(','.join(map(str, pos_list)))
             self._fields['AnatomicalLandmarkCoordinates'].value = AnatomicalLandmarkCoordinates
 
 
