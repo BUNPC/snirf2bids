@@ -757,8 +757,9 @@ class Coordsystem(JSON):
             landmarkLabels = s.nirs[0].probe.landmarkLabels
             landmarkPos3D = s.nirs[0].probe.landmarkPos3D
             AnatomicalLandmarkCoordinates = {}
-            for i in range(landmarkLabels.shape[0]):
-                AnatomicalLandmarkCoordinates[landmarkLabels[i]]= landmarkPos3D[i,0:3].tolist()
+            if not any([v is None for v in [landmarkLabels, landmarkPos3D]]):
+                for i in range(landmarkLabels.shape[0]):
+                    AnatomicalLandmarkCoordinates[landmarkLabels[i]]= landmarkPos3D[i,0:3].tolist()
             self._fields['AnatomicalLandmarkCoordinates'].value = AnatomicalLandmarkCoordinates
 
 
