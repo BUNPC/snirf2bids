@@ -1,0 +1,28 @@
+cff-version: 1.2.0
+title: snirf2bids
+message: Cite snirf2bids
+type: software
+authors:
+  - affiliation: Boston University College of Engineering
+    family-names: Zhang
+    given-names: Juncheng
+  - given-names: Christian
+    family-names: Arthur
+    affiliation: Boston University College of Engineering
+  - given-names: Jeonghoon
+    family-names: Choi
+    affiliation: Boston University College of Engineering
+  - given-names: Jiazhen
+    family-names: Liu
+    affiliation: Boston University College of Engineering
+  - given-names: Sreekanth
+    family-names: Kura
+    affiliation: Boston University Neurophotonics Center
+  - given-names: Stephen
+    family-names: Tucker
+    email: sstucker@bu.edu
+    affiliation: Boston University Neurophotonics Center
+    orcid: 'https://orcid.org/0000-0001-7696-8745'
+date-released: 2022-5-19
+doi: https://doi.org/10.5281/zenodo.6784243
+url: "https://github.com/BUNPC/snirf2bids"

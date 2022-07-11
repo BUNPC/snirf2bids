@@ -1,6 +1,7 @@
 ![python](https://img.shields.io/pypi/pyversions/snirf2bids?color=green)
 [![pypi](https://img.shields.io/pypi/v/snirf2bids?color=blue)](https://pypi.org/project/snirf2bids/)
 [![tests](https://github.com/BUNPC/snirf2bids/actions/workflows/test.yml/badge.svg)](https://github.com/BUNPC/snirf2bids/actions/workflows/test.yml)
+[![DOI](https://zenodo.org/badge/478632378.svg)](https://zenodo.org/badge/latestdoi/478632378)
 
 # snirf2BIDS
 Conveniently generate [BIDS files](https://bids-specification--802.org.readthedocs.build/en/802/04-modality-specific-files/11-functional-near-infrared-spectroscopy.html) from [SNIRF files](https://github.com/fnirs/snirf).  
