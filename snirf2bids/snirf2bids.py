@@ -1046,14 +1046,19 @@ class Sidecar(JSON):
             self._fields['SamplingFrequency'].value = 1 / (np.mean(np.diff(np.array(s.nirs[0].data[0].time))) * _get_time_unit(s.nirs[0].metaDataTags.TimeUnit))
             self._fields['NIRSChannelCount'].value = len(s.nirs[0].data[0].measurementList)
             self._fields['TaskName'].value = _pull_entity_value(fpath, 'task')
-            if s.nirs[0].probe.detectorPos2D is None \
-                    and s.nirs[0].probe.sourcePos2D is None:
-                self._fields['NIRSSourceOptodeCount'].value = len(s.nirs[0].probe.sourcePos3D)
+            if s.nirs[0].probe.detectorPos3D is not None:
                 self._fields['NIRSDetectorOptodeCount'].value = len(s.nirs[0].probe.detectorPos3D)
-            elif s.nirs[0].probe.detectorPos3D is None \
-                    and s.nirs[0].probe.sourcePos3D is None:
-                self._fields['NIRSSourceOptodeCount'].value = len(s.nirs[0].probe.sourcePos2D)
+            elif s.nirs[0].probe.detectorPos2D is not None:
                 self._fields['NIRSDetectorOptodeCount'].value = len(s.nirs[0].probe.detectorPos2D)
+            else:
+                self._fields['NIRSDetectorOptodeCount'].value = 0
+                
+            if s.nirs[0].probe.sourcePos3D is not None:
+                self._fields['NIRSSourceOptodeCount'].value = len(s.nirs[0].probe.sourcePos3D)
+            elif s.nirs[0].probe.sourcePos2D is not None:
+                self._fields['NIRSSourceOptodeCount'].value = len(s.nirs[0].probe.sourcePos2D)
+            else:
+                self._fields['NIRSSourceOptodeCount'].value = 0
 
 
 class SnirfRun(object):
