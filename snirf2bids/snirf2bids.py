@@ -89,7 +89,7 @@ def _makefiledir(info, classname, fpath, sidecar=None):
 
     if info is not None:
         filename = _make_filename_prefix(info)
-        filedir = fpath + '/' + filename
+        filedir = os.path.join(fpath, filename+'_'+classname)
     else:
         raise ValueError("No subject info for BIDS file naming reference")
 
@@ -588,8 +588,7 @@ class JSON(Metadata):
         """
 
         classname = self.get_class_name().lower()
-        filedir = _makefiledir(info, classname, fpath)
-
+        filedir = _makefiledir(info, classname, fpath)+'.json'
         fields = {}
         for name in self._fields.keys():
             if self._fields[name].value is not None:
@@ -641,16 +640,16 @@ class TSV(Metadata):
         """
 
         classname = self.get_class_name().lower()
-        filedir = _makefiledir(info, classname, fpath)
+        filedir = _makefiledir(info, classname, fpath)+'.tsv'
 
         fieldnames, valfiltered, jsontext = self.get_all_fields()
 
         # TSV FILE WRITING
-        with open(filedir, 'w', newline='') as tsvfile:
-            writer = csv.writer(tsvfile, delimiter='\t', newline='')  # writer setup in tsv format
+        with open(filedir, 'a+', newline='') as tsvfile:
+            writer = csv.writer(tsvfile, delimiter='\t')  # writer setup in tsv format
             if header:
                 writer.writerow(fieldnames)  # write fieldnames
-            writer.writerows(valfiltered)  # write rows
+            writer.writerows(np.transpose(valfiltered))  # write rows
 
     def load_from_tsv(self, fpath):
         """Create the TSV metadata class from a TSV file
@@ -1199,6 +1198,12 @@ class SnirfRun(object):
         self.sidecar.save_to_json(self.entities, fpath)
         self.events.save_to_tsv(self.entities, fpath)
         self.events.export_sidecar(self.entities, fpath)
+        # for idx, physio in enumerate(self.physio):
+        #     if idx == 0:
+        #         physio.save_to_tsv(self.entities, fpath)
+        #     else:
+        #         physio.save_to_tsv(self.entities, fpath)
+        # self.physio.save_to_tsv(self.entities, fpath)
 
     def export_to_dict(self):
         export = {}  # This is a deep copy. We want to return the entities we parsed to the client
@@ -1217,13 +1222,14 @@ class SnirfRun(object):
         # channels.tsv + json sidecar
         fieldnames, valfiltered, temp = self.channels.get_all_fields()
         export[fnames['channels']] = temp
-
+        
+        # This commented part saves aux data as events files. Uncomment below part 
         # *_physio.tsv + *_physio.json batch
-        for physio in self.physio:
-            fieldnames, valfiltered, temp = physio.get_all_fields(header=False)
-            tsv_name, json_name = physio.names()
-            export[tsv_name] = temp
-            export[json_name] = json.dumps(physio.sidecar)
+        # for physio in self.physio:
+        #     fieldnames, valfiltered, temp = physio.get_all_fields(header=False)
+        #     tsv_name, json_name = physio.names()
+        #     export[tsv_name] = temp
+        #     export[json_name] = json.dumps(physio.sidecar)
 
         # nirs sidecar
         export[fnames['sidecar']] = json.dumps(self.sidecar.get_all_fields())
@@ -1246,8 +1252,7 @@ class SnirfRun(object):
         export[_make_filename_prefix(self.entities) + '_scans.tsv'] = text
 
         return export
-
-
+    
 def snirf2bids(path_to_snirf: str, outputpath: str = None) -> str:
     """Creates BIDS metadata text files from a SNIRF file
 
@@ -1255,7 +1260,6 @@ def snirf2bids(path_to_snirf: str, outputpath: str = None) -> str:
             inputpath (str): The file path to the reference SNIRF file
             outputpath (str): (Optional) The file path/directory for the created BIDS metadata files
     """
-    run = SnirfRun(fpath=path_to_snirf)
     s = SnirfRun(fpath=path_to_snirf).export_to_dict()
     if outputpath is None:
         outputpath = os.path.join(os.path.split(path_to_snirf)[0])  # If no output location provided, put files next to input SNIRF
