@@ -1198,11 +1198,11 @@ class SnirfRun(object):
         self.sidecar.save_to_json(self.entities, fpath)
         self.events.save_to_tsv(self.entities, fpath)
         self.events.export_sidecar(self.entities, fpath)
-        for idx, physio in enumerate(self.physio):
-            if idx == 0:
-                physio.save_to_tsv(self.entities, fpath)
-            else:
-                physio.save_to_tsv(self.entities, fpath)
+        # for idx, physio in enumerate(self.physio):
+        #     if idx == 0:
+        #         physio.save_to_tsv(self.entities, fpath)
+        #     else:
+        #         physio.save_to_tsv(self.entities, fpath)
         # self.physio.save_to_tsv(self.entities, fpath)
 
     def export_to_dict(self):
@@ -1222,13 +1222,14 @@ class SnirfRun(object):
         # channels.tsv + json sidecar
         fieldnames, valfiltered, temp = self.channels.get_all_fields()
         export[fnames['channels']] = temp
-
+        
+        # This commented part saves aux data as events files. Uncomment below part 
         # *_physio.tsv + *_physio.json batch
-        for physio in self.physio:
-            fieldnames, valfiltered, temp = physio.get_all_fields(header=False)
-            tsv_name, json_name = physio.names()
-            export[tsv_name] = temp
-            export[json_name] = json.dumps(physio.sidecar)
+        # for physio in self.physio:
+        #     fieldnames, valfiltered, temp = physio.get_all_fields(header=False)
+        #     tsv_name, json_name = physio.names()
+        #     export[tsv_name] = temp
+        #     export[json_name] = json.dumps(physio.sidecar)
 
         # nirs sidecar
         export[fnames['sidecar']] = json.dumps(self.sidecar.get_all_fields())
@@ -1251,8 +1252,7 @@ class SnirfRun(object):
         export[_make_filename_prefix(self.entities) + '_scans.tsv'] = text
 
         return export
-
-
+    
 def snirf2bids(path_to_snirf: str, outputpath: str = None) -> str:
     """Creates BIDS metadata text files from a SNIRF file
 
@@ -1260,7 +1260,6 @@ def snirf2bids(path_to_snirf: str, outputpath: str = None) -> str:
             inputpath (str): The file path to the reference SNIRF file
             outputpath (str): (Optional) The file path/directory for the created BIDS metadata files
     """
-    run = SnirfRun(fpath=path_to_snirf)
     s = SnirfRun(fpath=path_to_snirf).export_to_dict()
     if outputpath is None:
         outputpath = os.path.join(os.path.split(path_to_snirf)[0])  # If no output location provided, put files next to input SNIRF
@@ -1274,6 +1273,4 @@ def snirf2bids(path_to_snirf: str, outputpath: str = None) -> str:
 
 def snirf2json(path_to_snirf: str) -> str:
     run = SnirfRun(fpath=path_to_snirf)
-    head_tail = os.path.split(path_to_snirf)
-    run.directory_export(head_tail[0])
     return json.dumps(run.export_to_dict())
