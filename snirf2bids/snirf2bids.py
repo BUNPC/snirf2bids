@@ -109,7 +109,7 @@ def _make_filename_prefix(entities_dict: dict, key = None):
     name = 'sub-' + entities_dict['sub']
     if 'ses' in entities:
         name += '_ses-' + entities_dict['ses']
-    if 'task' in entities  and key is not 'optodes' and key is not 'coordsystem' and key is not 'scans':
+    if 'task' in entities  and key != 'optodes' and key != 'coordsystem' and key != 'scans':
         name += '_task-' + entities_dict['task']
     # Misc entities
     for entity in [entity for entity in entities if entity not in ['sub', 'ses', 'task', 'run']]:
