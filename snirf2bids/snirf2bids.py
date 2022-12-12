@@ -96,7 +96,7 @@ def _makefiledir(info, classname, fpath, sidecar=None):
     return filedir
 
 
-def _make_filename_prefix(entities_dict: dict):
+def _make_filename_prefix(entities_dict: dict, key = None):
     """Compose a file prefix from a dict of entities
 
         Args:
@@ -104,11 +104,12 @@ def _make_filename_prefix(entities_dict: dict):
         Returns:
             (str) An ordered file prefix
     """
+
     entities = list(entities_dict.keys())
     name = 'sub-' + entities_dict['sub']
     if 'ses' in entities:
         name += '_ses-' + entities_dict['ses']
-    if 'task' in entities:
+    if 'task' in entities  and key is not 'optodes' and key is not 'coordsystem' and key is not 'scans':
         name += '_task-' + entities_dict['task']
     # Misc entities
     for entity in [entity for entity in entities if entity not in ['sub', 'ses', 'task', 'run']]:
@@ -167,7 +168,7 @@ def _pull_scans(entities, field, fpath=None):
         return None
     else:
         if field == 'filename':
-            return 'nirs/' + _make_filename_prefix(entities) + '.snirf'
+            return 'nirs/' + _make_filename_prefix(entities) + '_nirs.snirf'
         elif field == 'acq_time':
             with Snirf(fpath, 'r') as s:
                 date = s.nirs[0].metaDataTags.MeasurementDate
@@ -920,6 +921,7 @@ class Channels(TSV):
             detector_list = []
             ctype = []
             wavelength_nominal = np.zeros(len(s.nirs[0].data[0].measurementList))
+            units = []
 
             for i in range(len(s.nirs[0].data[0].measurementList)):
                 source_index = s.nirs[0].data[0].measurementList[i].sourceIndex
@@ -938,6 +940,11 @@ class Channels(TSV):
                 source_list.append(src_labels[source_index - 1])
                 detector_list.append(det_labels[detector_index - 1])
                 wavelength_nominal[i] = wavelength[wavelength_index - 1]
+                if s.nirs[0].data[0].measurementList[i].dataUnit is None:
+                    units.append(' ') 
+                else:
+                    units.append(s.nirs[0].data[0].measurementList[i].dataUnit)
+                
 
             if load_aux and len(s.nirs[0].aux) > 0:
                 append_nominal = np.empty((1, len(s.nirs[0].aux)))
@@ -963,6 +970,7 @@ class Channels(TSV):
             self._fields['type'].value = np.array(ctype)
             self._fields['source'].value = np.array(source_list)
             self._fields['detector'].value = np.array(detector_list)
+            self._fields['units'].value = np.array(units)
 
 
 class Events(TSV):
@@ -1136,7 +1144,7 @@ class SnirfRun(object):
         }
         
         for key in fnames.keys():
-            fnames[key] = fnames[key].format(_make_filename_prefix(self.entities))
+            fnames[key] = fnames[key].format(_make_filename_prefix(self.entities, key))
         
         return fnames
 
@@ -1241,15 +1249,15 @@ class SnirfRun(object):
         sidecarname = fnames['events'].replace('.tsv', '.json')
         export[sidecarname] = json.dumps(self.events.sidecar)
 
-        # participant.tsv
-        fields = self.participants
-        text = _tsv_to_json(fields)
-        export[_make_filename_prefix(self.entities) + '_participants.tsv'] = text
+        # participant.tsv ; participants created on front end. This won't be need. Commenting juts in case if we need this back
+        # fields = self.participants
+        # text = _tsv_to_json(fields)
+        # export[_make_filename_prefix(self.entities) + '_participants.tsv'] = text
 
         # scans.tsv
         fields = self.scans
         text = _tsv_to_json(fields)
-        export[_make_filename_prefix(self.entities) + '_scans.tsv'] = text
+        export[_make_filename_prefix(self.entities, 'scans') + '_scans.tsv'] = text
 
         return export
     
@@ -1266,6 +1274,9 @@ def snirf2bids(path_to_snirf: str, outputpath: str = None) -> str:
     for item in list(s.keys()):
         if item.endswith('.json'):
             with open(os.path.join(outputpath, item), 'w', newline='') as f:
+                f.write(s[item])
+        elif item.endswith('_scans.tsv'):
+            with open(os.path.join(os.path.dirname(outputpath), item), 'w', newline='') as f:
                 f.write(s[item])
         elif item.endswith('.tsv'):
             with open(os.path.join(outputpath, item), 'w', newline='') as f:
