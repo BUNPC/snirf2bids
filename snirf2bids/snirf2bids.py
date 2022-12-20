@@ -941,7 +941,7 @@ class Channels(TSV):
                 detector_list.append(det_labels[detector_index - 1])
                 wavelength_nominal[i] = wavelength[wavelength_index - 1]
                 if s.nirs[0].data[0].measurementList[i].dataUnit is None:
-                    units.append(' ') 
+                    units.append('AU') 
                 else:
                     units.append(s.nirs[0].data[0].measurementList[i].dataUnit)
                 
