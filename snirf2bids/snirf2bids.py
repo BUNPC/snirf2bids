@@ -1013,13 +1013,19 @@ class Events(TSV):
                             new = np.append(stim.data, np.reshape(np.array([stim.name] * stim.data.shape[0]), (-1, 1)), 1)
                             temp = np.append(temp, new, 0)
 
-            temp = temp[np.argsort(temp[:, 0])]
-            self._fields['onset'].value = temp[:, 0]
-            self._fields['duration'].value = temp[:, 1]
-            self._fields['value'].value = temp[:, 2]
-            self._fields['trial_type'].value = temp[:, 3]
-            # Note: Only works with these fields for now, have to adjust for varying fields, especially those that are
-            # not specified in the BIDS documentation
+            if temp is not None:
+                temp = temp[np.argsort(temp[:, 0])]
+                self._fields['onset'].value = temp[:, 0]
+                self._fields['duration'].value = temp[:, 1]
+                self._fields['value'].value = temp[:, 2]
+                self._fields['trial_type'].value = temp[:, 3]
+                # Note: Only works with these fields for now, have to adjust for varying fields, especially those that are
+                # not specified in the BIDS documentation
+            else:
+                self._fields['onset'].value = '0'
+                self._fields['duration'].value = '0'
+                self._fields['value'].value = '0'
+                self._fields['trial_type'].value = '0'
 
 
 class Sidecar(JSON):
