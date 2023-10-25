@@ -34,7 +34,11 @@ def _get_time_unit(key: str):
     try:
         return float(__TIME_UNITS__[str(key)])
     except KeyError:
-        warn('TimeUnit {} not understood. Falling back to interpretation as seconds.')
+        # Removing below warning because any warning displayed on command window results in
+        # failing to generate bid text files on bnirs wesbite. Arezoo reads everything on command window to 
+        # generate BIDS text files. I think warning causes her code fail. For now, we don't print any 
+        # warnings so that BfNIRS website works correctly
+        # warn('TimeUnit {} not understood. Falling back to interpretation as seconds.')
         return 1.0
 
 
