@@ -809,14 +809,15 @@ class Optodes(TSV):
                                                     s.nirs[0].probe.detectorPos3D[:, 0])
                 self._fields['y'].value = np.append(s.nirs[0].probe.sourcePos3D[:, 1],
                                                     s.nirs[0].probe.detectorPos3D[:, 1])
-                if np.max(np.append(s.nirs[0].probe.sourcePos3D[:, 2], s.nirs[0].probe.detectorPos3D[:, 2])) > 0:
-                    self._fields['z'].value = np.append(s.nirs[0].probe.sourcePos3D[:, 2],
+                # if np.max(np.append(s.nirs[0].probe.sourcePos3D[:, 2], s.nirs[0].probe.detectorPos3D[:, 2])) > 0:
+                self._fields['z'].value = np.append(s.nirs[0].probe.sourcePos3D[:, 2],
                                                         s.nirs[0].probe.detectorPos3D[:, 2])
             elif s.nirs[0].probe.detectorPos2D is not None and s.nirs[0].probe.sourcePos2D is not None:
                 self._fields['x'].value = np.append(s.nirs[0].probe.sourcePos2D[:, 0],
                                                     s.nirs[0].probe.detectorPos2D[:, 0])
                 self._fields['y'].value = np.append(s.nirs[0].probe.sourcePos2D[:, 1],
                                                     s.nirs[0].probe.detectorPos2D[:, 1])
+                self._fields['z'].value = np.zeros(self._fields['y'].value.shape)
             else:
                 raise SnirfFormatError('Cannot import optodes information from ' + fpath + '!')
 
@@ -1121,7 +1122,7 @@ class SnirfRun(object):
         }
         self.scans = {
             'filename': _pull_scans(self.entities, 'filename', fpath=fpath),
-            'acq_time': _pull_scans(self.entities, 'acq_time', fpath=fpath)
+            # 'acq_time': _pull_scans(self.entities, 'acq_time', fpath=fpath)
         }
 
     def pull_task(self, fpath=None):
@@ -1271,17 +1272,21 @@ class SnirfRun(object):
 
         return export
     
-def snirf2bids(path_to_snirf: str, outputpath: str = None) -> str:
+def snirf2bids(path_to_snirf: str, outputpath: str = None, list_files=[]) -> str:
     """Creates BIDS metadata text files from a SNIRF file
 
         Args:
-            inputpath (str): The file path to the reference SNIRF file
+            path_to_snirf (str): The file path to the reference SNIRF file
             outputpath (str): (Optional) The file path/directory for the created BIDS metadata files
-    """
+            list_files (list): (Optional)  A list of BIDS files to overwrite. If empty, all files are overwritten; otherwise, only the specified files are overwritten
+     """
     s = SnirfRun(fpath=path_to_snirf).export_to_dict()
     if outputpath is None:
         outputpath = os.path.join(os.path.split(path_to_snirf)[0])  # If no output location provided, put files next to input SNIRF
     for item in list(s.keys()):
+        if list_files: # if list_files is empty overwtite all files. Otherwise, overwrite only specified files
+            if not item.endswith(tuple(list_files)):
+                continue
         if item.endswith('.json'):
             with open(os.path.join(outputpath, item), 'w', newline='') as f:
                 f.write(s[item])
@@ -1291,7 +1296,30 @@ def snirf2bids(path_to_snirf: str, outputpath: str = None) -> str:
         elif item.endswith('.tsv'):
             with open(os.path.join(outputpath, item), 'w', newline='') as f:
                 f.write(s[item])
+                
+def snirf2bids_recurse(fpath: str, list_files=[]) -> str:
+    """
+    Generates BIDS metadata text files from a SNIRF file or directory recursively.
+    
+    This function creates BIDS-compliant text files based on SNIRF (Shared Near-Infrared Spectroscopy Format) files. 
+    If `fpath` is a directory, the function processes all SNIRF files within the directory and its subdirectories. 
+    If `fpath` is the path to a single SNIRF file, the function generates BIDS files for that specific file.
+    
+    Args:
+        fpath (str): Path to a directory containing SNIRF files or the path to a single SNIRF file.
+        list_files (list, optional): A list of specific BIDS files to overwrite. 
+            If empty, all files are overwritten. If provided, only the specified files are overwritten.
+    """
+
+    if os.path.isdir(fpath):
+        for f in os.listdir(fpath):
+            snirf2bids_recurse(os.path.join(fpath, f), list_files=list_files)
+    elif os.path.isfile(fpath):
+        if fpath.endswith('.snirf'):
+            snirf2bids(fpath, list_files=list_files)
 
 def snirf2json(path_to_snirf: str) -> str:
     run = SnirfRun(fpath=path_to_snirf)
     return json.dumps(run.export_to_dict())
+
+
