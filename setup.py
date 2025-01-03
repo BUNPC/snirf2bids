@@ -15,8 +15,8 @@ from snirf2bids.__version__ import __version__ as VERSION
 # Package meta-data.
 NAME = 'snirf2bids'
 DESCRIPTION = 'To convert snirf file to bids format.'
-URL = 'https://github.com/andyzjc/snirf2bids'
-EMAIL = 'andyzjc@bu.edu'
+URL = 'https://github.com/BUNPC/snirf2bids'
+EMAIL = 'skura@bu.edu'
 AUTHOR = 'JC'
 REQUIRES_PYTHON = '>=3.6.0'
 
