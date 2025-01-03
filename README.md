@@ -16,9 +16,15 @@ SNIRF files with [valid BIDS names](https://bids-specification.readthedocs.io/en
 
 For use with snirf2bids, a SNIRF file name must include at least the `sub-` and `task-` entitites and end in `_nirs.snirf`, i.e. `sub-01_task-tapping_nirs.snirf`.
 
-### Create BIDS text files from a SNIRF file
+### Generate BIDS text files from a SNIRF file
+If the list_files parameter is empty, snirf2bids replaces all existing BIDS files with newly generated ones; otherwise, it replaces only the files specified in list_files.
 ```python
-snirf2bids.snirf2bids('<path to snirf file>', '<folder to generate files in>')
+snirf2bids.snirf2bids('<path to snirf file>', 'outputpath = <folder to generate files in>', 'list_files =<list of BIDS files to replace>')
+```
+### Generate BIDS text files from a SNIRF file or from all SNIRF files within a directory and its subdirectories
+If the list_files parameter is empty, snirf2bids replaces all existing BIDS files with newly generated ones; otherwise, it replaces only the files specified in list_files.
+```python
+snirf2bids.snirf2bids_recurse('<path to a directiory or path to snirf file>', 'list_files =<list of BIDS files to replace>')
 ```
 ### Export BIDS text files in JSON Format
 ```python
