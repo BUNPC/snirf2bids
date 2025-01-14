@@ -9,6 +9,7 @@ import os
 from warnings import warn
 
 import numpy as np
+import pandas as pd
 import importlib_resources
 from pysnirf2 import Snirf, SnirfFormatError
 
@@ -1260,10 +1261,10 @@ class SnirfRun(object):
         sidecarname = fnames['events'].replace('.tsv', '.json')
         export[sidecarname] = json.dumps(self.events.sidecar)
 
-        # participant.tsv ; participants created on front end. This won't be need. Commenting juts in case if we need this back
-        # fields = self.participants
-        # text = _tsv_to_json(fields)
-        # export[_make_filename_prefix(self.entities) + '_participants.tsv'] = text
+        # participant.tsv 
+        fields = self.participants
+        text = _tsv_to_json(fields)
+        export['participants.tsv'] = text
 
         # scans.tsv
         fields = self.scans
@@ -1272,7 +1273,7 @@ class SnirfRun(object):
 
         return export
     
-def snirf2bids(path_to_snirf: str, outputpath: str = None, list_files=[]) -> str:
+def snirf2bids(path_to_snirf: str, outputpath: str = None, list_files=[], retain_old_info=True) -> str:
     """Creates BIDS metadata text files from a SNIRF file
 
         Args:
@@ -1291,13 +1292,84 @@ def snirf2bids(path_to_snirf: str, outputpath: str = None, list_files=[]) -> str
             with open(os.path.join(outputpath, item), 'w', newline='') as f:
                 f.write(s[item])
         elif item.endswith('_scans.tsv'):
-            with open(os.path.join(os.path.dirname(outputpath), item), 'w', newline='') as f:
-                f.write(s[item])
+            file_path = os.path.join(os.path.dirname(outputpath), item)
+            # print(s[item])
+            if not os.path.isfile(file_path):
+                with open(os.path.join(file_path), 'w', newline='') as f:
+                    f.write(s[item])
+            else:
+                temp_file_path = os.path.join(os.path.dirname(outputpath), 'temp_'+item)
+                with open(os.path.join(temp_file_path), 'w', newline='') as f:
+                    f.write(s[item])
+                df1 = pd.read_csv(file_path, sep='\t')
+                df2 = pd.read_csv(temp_file_path, sep='\t')
+                merged_df = pd.merge(df1, df2, on='filename', how='outer', suffixes=('_df1', '_df2'))
+                
+                # Identify conflicting columns dynamically (columns with both '_df1' and '_df2' suffixes)
+                conflicting_columns = [col.split('_df1')[0] for col in merged_df.columns if col.endswith('_df1')]
+                
+                # Resolve conflicts
+                if retain_old_info:
+                    for col in conflicting_columns:
+                        merged_df[col] = merged_df[f'{col}_df1'].combine_first(merged_df[f'{col}_df2'])
+                else:
+                    for col in conflicting_columns:
+                        merged_df[col] = merged_df[f'{col}_df2'].combine_first(merged_df[f'{col}_df1'])
+
+                # Drop unnecessary columns created by the merge
+                columns_to_drop = [f'{col}_df1' for col in conflicting_columns] + [f'{col}_df2' for col in conflicting_columns]
+                merged_df = merged_df.drop(columns=columns_to_drop)
+                
+                merged_df = merged_df.fillna(' ')
+                merged_df.to_csv(file_path, sep='\t', index=False)
+        elif item.endswith('participants.tsv'):
+            sub_index = outputpath.find('sub-')
+            participants_path = os.path.join(outputpath[:sub_index],item)
+            if not os.path.isfile(participants_path):
+                with open(participants_path, 'w', newline='') as f:
+                    f.write(s[item])
+            else:
+                temp_file_path = os.path.join(outputpath[:sub_index], 'temp_'+item)
+                with open(os.path.join(temp_file_path), 'w', newline='') as f:
+                    f.write(s[item])
+                    
+                df1 = pd.read_csv(participants_path, sep='\t')
+                # Save the original column order of df1
+                original_order = df1.columns.tolist()
+                df2 = pd.read_csv(temp_file_path, sep='\t')
+                merged_df = pd.merge(df1, df2, on='participant_id', how='outer', suffixes=('_df1', '_df2'))
+                
+                # Identify conflicting columns dynamically (columns with both '_df1' and '_df2' suffixes)
+                conflicting_columns = [col.split('_df1')[0] for col in merged_df.columns if col.endswith('_df1')]
+                
+                # Resolve conflicts
+                if retain_old_info:
+                    for col in conflicting_columns:
+                        merged_df[col] = merged_df[f'{col}_df1'].combine_first(merged_df[f'{col}_df2'])
+                else:
+                    for col in conflicting_columns:
+                        merged_df[col] = merged_df[f'{col}_df2'].combine_first(merged_df[f'{col}_df1'])
+
+                # Drop unnecessary columns created by the merge
+                columns_to_drop = [f'{col}_df1' for col in conflicting_columns] + [f'{col}_df2' for col in conflicting_columns]
+                merged_df = merged_df.drop(columns=columns_to_drop)
+                
+                # Add new columns from df2 that are not in df1
+                for col in df2.columns:
+                    if col not in original_order:
+                        original_order.append(col)
+                        
+                # Reorder the columns
+                merged_df = merged_df[original_order]
+                
+                merged_df = merged_df.fillna(' ')
+                merged_df.to_csv(participants_path, sep='\t', index=False)
+                
         elif item.endswith('.tsv'):
             with open(os.path.join(outputpath, item), 'w', newline='') as f:
                 f.write(s[item])
                 
-def snirf2bids_recurse(fpath: str, list_files=[]) -> str:
+def snirf2bids_recurse(fpath: str, list_files=[], retain_old_info=True) -> str:
     """
     Generates BIDS metadata text files from a SNIRF file or directory recursively.
     
@@ -1313,10 +1385,10 @@ def snirf2bids_recurse(fpath: str, list_files=[]) -> str:
 
     if os.path.isdir(fpath):
         for f in os.listdir(fpath):
-            snirf2bids_recurse(os.path.join(fpath, f), list_files=list_files)
+            snirf2bids_recurse(os.path.join(fpath, f), list_files=list_files, retain_old_info=retain_old_info)
     elif os.path.isfile(fpath):
         if fpath.endswith('.snirf'):
-            snirf2bids(fpath, list_files=list_files)
+            snirf2bids(fpath, list_files=list_files, retain_old_info=retain_old_info)
 
 def snirf2json(path_to_snirf: str) -> str:
     run = SnirfRun(fpath=path_to_snirf)
