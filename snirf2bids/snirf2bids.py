@@ -1279,7 +1279,10 @@ def snirf2bids(path_to_snirf: str, outputpath: str = None, list_files=[], retain
         Args:
             path_to_snirf (str): The file path to the reference SNIRF file
             outputpath (str): (Optional) The file path/directory for the created BIDS metadata files
-            list_files (list): (Optional)  A list of BIDS files to overwrite. If empty, all files are overwritten; otherwise, only the specified files are overwritten
+            list_files (list): (Optional)  A list of BIDS files to overwrite. 
+                If empty, all files are overwritten; otherwise, only the specified files are overwritten
+            retain_old_info (Boolean) : (optional) with a default value of True, ensures that information in the 
+                existing scans and participants files is retained whenever a conflict occurs.
      """
     s = SnirfRun(fpath=path_to_snirf).export_to_dict()
     if outputpath is None:
@@ -1381,6 +1384,8 @@ def snirf2bids_recurse(fpath: str, list_files=[], retain_old_info=True) -> str:
         fpath (str): Path to a directory containing SNIRF files or the path to a single SNIRF file.
         list_files (list, optional): A list of specific BIDS files to overwrite. 
             If empty, all files are overwritten. If provided, only the specified files are overwritten.
+        retain_old_info (Boolean) : (optional) with a default value of True, ensures that information in the 
+            existing scans and participants files is retained whenever a conflict occurs.
     """
 
     if os.path.isdir(fpath):
