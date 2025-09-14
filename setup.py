@@ -27,7 +27,7 @@ about['__version__'] = VERSION
 REQUIRED = [
     'numpy',
     'setuptools',
-    'pysnirf2',
+    'snirf',
     'importlib_resources'
 ]
 
