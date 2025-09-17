@@ -11,7 +11,7 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 import importlib_resources
-from pysnirf2 import Snirf, SnirfFormatError
+from snirf import Snirf, SnirfFormatError
 
 try:
     from snirf2bids.__version__ import __version__ as __version__
