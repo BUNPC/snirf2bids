@@ -1,3 +1,4 @@
 __pycache__/
 *.log
 /venv
+snirf2bids/__version__.py
