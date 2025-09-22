@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=69", "wheel", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "snirf2bids"
+dynamic=["version"]
+description = "To convert snirf file to bids format."
+readme = "README.md"
+requires-python = ">=3.6"
+authors = [
+    {name="Sreekanth Kura", email="skura@bu.edu"},
+    {name="Christian Arthur" },
+    {name="Jeonghoon Choi"},
+    {name="Jiazhen Liu"},
+    {name="Juncheng Zhang"}
+]
+license = "MIT"
+urls = { Homepage = "https://github.com/BUNPC/snirf2bids" }
+classifiers = [
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.6",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy"
+]
+
+
+dependencies = [
+  "numpy",
+  "setuptools",
+  "snirf",
+  "importlib_resources"
+]
+
+[tool.setuptools_scm]
+version_file = "snirf2bids/__version__.py"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+exclude = ["tests", "*.tests", "*.tests.*", "tests.*"]
